@@ -7,11 +7,20 @@ angular.module('ShApp')
     $scope.apa = "Hej";
     $scope.campaignData = {};
 
-    DbService.getCampaign(4)
+    DbService.getCampaigns()
         .success(function(data) {
             $scope.campaignData = data;
             console.log(data);
     });
 
+    DbService.postLogin();
 
+    $scope.logOut = function() {
+    	console.log("apa");
+    	DbService.getLogout().then(function() {
+    		console.log("Utloggad");
+    	}, function() {
+    		console.log("Misslyckades att utlogga");
+    	});
+    };
 });

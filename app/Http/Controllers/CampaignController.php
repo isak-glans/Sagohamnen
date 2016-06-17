@@ -12,8 +12,6 @@ use DB;
 use App\Http\Requests;
 
 
-
-
 class campaignController extends Controller
 {
 

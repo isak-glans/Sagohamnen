@@ -11,11 +11,20 @@
 |
 */
 
-Route::get('/', 'AngularController@serveApp');
+
 
 Route::auth();
 
+
+
 Route::get('/home', 'HomeController@index');
+
+Route::get('api/mytoken', function(){
+	$result = array( 'token' => csrf_token() );
+	return response()->json( $result );
+});
+
+
 
 Route::group(['prefix' => 'api/', 'middleware' => 'auth'], function () {
   Route::get('admin', function() {
@@ -27,6 +36,7 @@ Route::group(['prefix' => 'api/'], function () {
 	Route::get('campaign/{slug}', 'CampaignController@single');
 });
 
+Route::get('/', 'AngularController@serveApp');
 
 //Route::get('api/campaign', 'CampaignController@all');
 

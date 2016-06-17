@@ -9,10 +9,12 @@
 
     {{ apa }}
 
+    <button ng-click="logOut()">Logga ut</button>
+
 
     <script src="assets/js/app.js"></script>
     <script>
-    /*var url = 'http://localhost:8080/sagohamnen_laravel/public/api/campaigns';
+    /*var url = 'http://localhost:8000/public/login';
 	$.get( url, function( data ) {
 		console.log(data);
 	});*/
