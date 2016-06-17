@@ -12,6 +12,26 @@ var elixir = require('laravel-elixir');
  */
 
 elixir(function(mix) {
-    mix.sass('app.scss')
-    	.version('css/app.css');
+
+    /*mix.sass('app.scss')
+    	.version('css/app.css');*/
+
+    // It looks in folder resources/assets/sass
+    mix.sass([
+        '**/*.scss'
+    ], 'public/assets/css/app.css');
+
+    mix.scripts([
+    	'../../../node_modules/angular/angular.min.js',
+    	'../../../node_modules/angular-route/angular-route.min.js',
+       	'scripts/app.js',
+       	'scripts/controllers/CampaignController.js',
+       	'scripts/services/DbService.js'
+    ], 'public/assets/js/app.js');
+
+    /*
+	'../../../node_modules/angular/angular.min.js',
+    '../../../node_modules/angular-route/angular-route.min.js',*/
+
 });
+

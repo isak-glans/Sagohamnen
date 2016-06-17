@@ -37,12 +37,11 @@ class campaignController extends Controller
     //
     public function single ($id)
     {
-
-
+    	//$result = "Hej svejs";
     	$result = Campaign::find($id)->first();
+    	if($result == null) return response()->json( $result );
+
 		$result->gamemaster_name= $result->gamemaster()->value('name');
-
-
 
 		return response()->json( $result );
     }
