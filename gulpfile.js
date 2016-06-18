@@ -18,12 +18,15 @@ elixir(function(mix) {
 
     // It looks in folder resources/assets/sass
     mix.sass([
+        '../../../bower_components/bootstrap-sass/assets/stylesheets/_bootstrap.scss',
         '**/*.scss'
     ], 'public/assets/css/app.css');
 
     mix.scripts([
-    	'../../../node_modules/angular/angular.min.js',
-    	'../../../node_modules/angular-route/angular-route.min.js',
+    	'../../../bower_components/angular/angular.min.js',
+    	'../../../bower_components/angular-route/angular-route.min.js',
+        '../../../bower_components/jquery/dist/jquery.min.js',
+        '../../../bower_components/bootstrap-sass/assets/javascripts/bootstrap.min.js',
        	'scripts/app.js',
        	'scripts/controllers/CampaignController.js',
        	'scripts/services/DbService.js'

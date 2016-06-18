@@ -1,0 +1,22 @@
+{
+  "name": "sagohamnen_laravel",
+  "description": "",
+  "main": "",
+  "authors": [
+    "isakglans <isakglans@hotmail.com>"
+  ],
+  "license": "MIT",
+  "homepage": "https://github.com/isak-glans/Sagohamnen",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "angular": "angularjs#^1.5.7",
+    "angular-route": "^1.5.7",
+    "bootstrap-sass": "^3.3.6"
+  }
+}
