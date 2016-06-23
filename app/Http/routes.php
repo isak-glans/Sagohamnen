@@ -1,50 +1,46 @@
 <?php
 
-/*
-|--------------------------------------------------------------------------
-| Application Routes
-|--------------------------------------------------------------------------
-|
-| Here is where you can register all of the routes for an application.
-| It's a breeze. Simply tell Laravel the URIs it should respond to
-| and give it the controller to call when that URI is requested.
-|
-*/
-
-
-
 Route::auth();
 
-
-
-Route::get('/home', 'HomeController@index');
-
-Route::get('api/mytoken', function(){
-	$result = array( 'token' => csrf_token() );
-	return response()->json( $result );
-});
-
-
-
-Route::group(['prefix' => 'api/', 'middleware' => 'auth'], function () {
-  Route::get('admin', function() {
-    echo "Authenticated...";
-  });
-});
+// API
 Route::group(['prefix' => 'api/'], function () {
-	Route::get('campaigns', 'CampaignController@all');
-	Route::get('campaign/{slug}', 'CampaignController@single');
+	Route::resource('campaigns', 'CampaignController', ['except' => ['store', 'update', 'edit']]);
+	Route::get('mytoken', function(){
+
+		$result = array( 'token' => csrf_token() );
+		return response()->json( $result );
+	});
+	Route::get('username', function() {
+		if ( isset( Auth::user()->name ) ) :
+			$name = Auth::user()->name;
+		else:
+			$name = '';
+		endif;
+
+		return response()->json( $name );
+	});
 });
 
-Route::get('/', 'AngularController@serveApp');
+// API: Signed in users
+Route::group(['prefix' => 'api/', 'middleware' => 'auth'], function () {
+	//Route::resource('campaigns', 'CampaignController');
+	Route::resource('campaigns', 'CampaignController', ['only' => ['store', 'update', 'edit']]);
+	Route::get('admin', function() {
+		echo "Authenticated...";
+	});
+	Route::post('admin', function() {
+		echo "Authenticated...";
+	});
+});
 
-//Route::get('api/campaign', 'CampaignController@all');
+Route::get('/redirect', 'SocialAuthController@redirect');
+Route::get('/callback', 'SocialAuthController@callback');
 
+Route::get('/index', function() {
+	return view('index');
+});
 
-/*Route::group(['prefix' => 'api/', 'middleware' => 'auth:api'], function () {
-	// Only authenticated users call this api
-	/*Route::get('rpg/{id}', [
-	    'middleware' => 'auth',
-	    'uses' => 'RpgController@init'
-	]);
-});*/
+Route::get('/', function() {
+	return view('index');
+});
+
