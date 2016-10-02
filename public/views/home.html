@@ -1,2 +1,23 @@
-<h1>Home</h1>
+<h1>Rollspelsäventyr</h1>
 
+<div ng-controller="CampaignController" ng-init="getCampaigns()">
+	<table class="table table-hover">
+		<thead>
+			<tr>
+				<th>Namn</th>
+				<th>Genré</th>
+				<th>Spelare</th>
+				<th>Betyg</th>
+			</tr>
+		</thead>
+		<tbody>
+			<tr ng-repeat="x in campaignData">
+				<td><a ng-href="/#/campaign/{{x.id}}">{{x.name}}</a></td>
+				<td>{{x.genre}}</td>
+				<td>{{x.nr_players}}/{{x.max_nr_players}}</td>
+				<td>{{x.nr_rating}}</td>
+			</tr>
+		</tbody>
+	</table>
+	<button ng-show="allowed_make_new" ng-click="newCampaing()" >Ny kampanj</button>
+</div>

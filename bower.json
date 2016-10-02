@@ -17,6 +17,12 @@
   "dependencies": {
     "angular": "angularjs#^1.5.7",
     "angular-route": "^1.5.7",
-    "bootstrap-sass": "^3.3.6"
+    "angular-sanitize": "1.5.7",
+    "bootstrap": "^3.3.6",
+    "bootstrap-sass": "bootstrap-sass-official#^3.3.6",
+    "jquery": "^3.0.0",
+    "font-awesome-sass": "^4.6.2",
+    "bootstrap-social": "^5.0.0",
+    "angular-resource": "^1.5.8"
   }
 }

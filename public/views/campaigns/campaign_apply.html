@@ -1,0 +1,65 @@
+<div id="campaign_apply" ng-controller="ApplyCampaignCtrl" ng-init="campaignApplication_init()">
+	<h1>Spelansökan</h1>
+	<p>Ansökan om att delta i <a ng-href="#/campaign/{{campaign.id}}">{{campaign.name}}</a>.</p>
+
+	<div class="panel panel-default">
+		<div class="panel-heading">Spelkaraktär</div>
+		<div class="panel-body">
+			<form name="formApply" ng-submit="save()" novalidate>
+				<div class="form-group" ng-class="{ 'has-error' : formApply.name.$invalid && formEdit.new_name.$dirty }">
+					<label for="name">Namn</label>
+					<input
+						type="text"
+						name="name"
+						id="name"
+						ng-model="apply.name"
+						class="form-control"
+						ng-minlength="3"
+						ng-maxlength="30"
+						ng-pattern="/^[a-zA-ZåäöÅÄÖ_\s]*$/"
+						placeholder = "Namn"
+						required />
+				</div>
+				<p ng-show="formApply.name.$touched && formApply.name.$invalid" class="text-danger">Namnet är ogiltigt. Strängen måste vara mellan 4-30 tecken och bara bestå av bokstäver, mellanslag och liggande tecken.</p>
+
+				<label for="description">Beskrivning</label>
+				<div class="row">
+					<div class="form-group col-sm-7">
+						<textarea
+							name="description"
+							id="description"
+							ng-model="apply.description"
+							class="form-control"
+							ng-minlength = 3
+							ng-maxlength="4500"
+							placeholder = "Beskrivning"
+							rows="8"
+							required/></textarea>
+						<p ng-show="formApply.description.$error.minlength" class="text-danger">Beskrivningen är för kort, eller saknas.</p>
+					</div>
+
+					<div class="form-group col-sm-5">
+						<div id="character_portrait" alt="" style="background-image: url('{{currentPortrait.url}}');"></div>
+					</div>
+				</div>
+
+				<div id="campaign_apply_buttons" class="form-group">
+					<div class="col-sm-12">
+						<button class="btn btn-default pull-right" ng-click="cancel()">Ångra</button>
+						<input
+							type		="submit"
+							class		="btn btn-primary pull-right"
+							ng-disabled	="formApply.$invalid"
+							value		="Spara">
+						</input>
+					</div>
+				</div>
+			</form>
+
+			<portrait-pagination></portrait-pagination>
+
+		</div>
+	</div>
+
+
+</div>

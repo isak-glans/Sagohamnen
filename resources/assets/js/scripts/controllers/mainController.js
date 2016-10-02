@@ -13,10 +13,11 @@ angular.module('ShApp')
     var userBox = $('#user_section .user_bootstrap');
 
     $scope.username = "";
+    $scope.id = 0;
+    $scope.signedIn = false;
     $scope.userOptions = [];
 
     var init = function() {
-    	console.log("init");
         loginUser();
     }
     init();
@@ -27,7 +28,6 @@ angular.module('ShApp')
 
     $scope.logOut = function() {
         UserService.logout().then(function() {
-            console.log("Utloggad");
             updateUserMenu();
         }, function() {
             console.log("Misslyckades att utlogga");
@@ -35,44 +35,39 @@ angular.module('ShApp')
     };
 
     $scope.showUserMenu = function() {
-        console.log("Show");
         userMenu.slideToggle();
     }
 
     function loginUser(){
-        UserService.name().then(function(result) {
-            console.log(result);
-            $scope.username = result.data;
-
-            var signedIn = $scope.username != "" ? true : false;
-            console.log(signedIn);
-            updateUserMenu(signedIn);
+        UserService.name_and_id().then(function(result) {
+            $scope.myName = result.data.name;
+            $scope.myId = result.data.id;
+            $scope.meSignedIn = result.data.signed_in;
         });
     };
 
     var updateUserMenu = function(logedIn) {
-        console.log("Update menu..");
-        usernameSpan.html($scope.username);
+        usernameSpan.html($scope.myName);
 
         $scope.userOptions = [];
 
         if (logedIn) {
-            console.log("Inloggad");
-            userLoginBt.hide();
+            //userLoginBt.hide();
             var option = {'href' : './logout', 'text' : 'Logga ut' };
             $scope.userOptions.push(option);
         } else {
-            console.log("Inte Inloggad");
-            userLoginBt.show();
+            //userLoginBt.show();
             userBox.hide();
             var option = {'href' : '#/login', 'text' : 'Logga in' };
             $scope.userOptions.push(option);
         }
 
-
         /*<li><a ng-href="#/login">Logga in</a><li>
                         <li><a href="./logout">Logga ut</a><li>*/
     }
 
+    var editUser_save = function() {
+        console.log("Spara");
+    }
 
 });

@@ -1,0 +1,16 @@
+<div ng-if="chronicle.type == 1" class="row chronicle_entry">
+	<div class="col-sm-7">
+		<p>{{ chronicle.text }}</p>
+	</div>
+	<div class="col-sm-2 pull-right">
+		<img ng-src="{{chronicle.materials[0].media.url}}" alt="{{chronicle.materials[0].media.description}}" class="chronicle_gm_image">
+	</div>
+</div>
+<div ng-if="chronicle.type == 2" class="row chronicle_entry">
+	<div class="col-sm-1">
+		<a ng-href="./character/{{chronicle.materials[0].id}}"><img ng-src="{{chronicle.materials[0].media.url}}" alt="{{chronicle.materials[0].media.description}}" class="chronicle_rp_image"></a>
+	</div>
+	<div class="col-sm-11">
+		<p>{{ chronicle.text }}</p>
+	</div>
+</div>

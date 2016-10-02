@@ -18,30 +18,36 @@ elixir(function(mix) {
 
     // Copy files
     elixir(function(mix) {
-        mix.copy('bower_components/fontawesome/fonts', 'public/assets/fonts');
+        mix.copy('bower_components/font-awesome-sass/assets/fonts', 'public/assets/fonts');
     });
 
     // It looks in folder resources/assets/sass
     mix.sass([
         '**/*.scss',
+        //'../../../bower_components/bootstrap/dist/css/bootstrap.min.css',
         '../../../bower_components/bootstrap-sass/assets/stylesheets/_bootstrap.scss',
-        '../../../bower_components/font-awesome/scss/font-awesome.scss',
-        '../../../bower_components/bootstrap-social/bootstrap-social.css',
+        //'../../../bower_components/font-awesome-sass/assets/stylesheets/_font-awesome.scss',
+        //'../../../bower_components/bootstrap-social/bootstrap-social.scss',
     ], 'public/assets/css/app.css');
 
-    /*'../../../bower_components/bootstrap-sass/assets/stylesheets/_bootstrap.scss',*/
+
 
     // Looks in folder: resources/assets/js/
     mix.scripts([
     	'../../../bower_components/angular/angular.min.js',
+        '../../../bower_components/angular-resource/angular-resource.min.js',
     	'../../../bower_components/angular-route/angular-route.min.js',
+        '../../../bower_components/angular-sanitize/angular-sanitize.min.js',
         '../../../bower_components/jquery/dist/jquery.min.js',
         '../../../bower_components/bootstrap-sass/assets/javascripts/bootstrap.min.js',
-       	'scripts/app.js',
-        'scripts/controllers/MainController.js',
+
+        //'../../../bower_components/bootstrap/dist/js/bootstrap.min.js',
+        //'../../../bower_components/bootstrap-sass/assets/javascripts/bootstrap.min.js',
+       	'scripts/**/*.js',
+        /*'scripts/controllers/MainController.js',
        	'scripts/controllers/CampaignController.js',
        	'scripts/services/UserService.js',
-        'scripts/services/DbService.js'
+        'scripts/services/DbService.js'*/
     ], 'public/assets/js/app.js');
 
     /*

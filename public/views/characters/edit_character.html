@@ -1,0 +1,71 @@
+<div id="edit_character" ng-init="setup()">
+
+	<h1>{{headline}}</h1>
+
+	<form name="formEdit" ng-submit="saveEdit()" novalidate>
+		<div class="row">
+			<div class="col-sm-7">
+				<div class="form-group" ng-class="{ 'has-error' : formEdit.new_name.$invalid && formEdit.new_name.$dirty }">
+					<label for="new_name">Namn</label>
+					<input
+						type="text"
+						name="new_name"
+						id="name"
+						ng-model="form.name"
+						class="form-control"
+						ng-minlength="3"
+						ng-maxlength="30"
+						ng-pattern="/^[a-zA-ZåäöÅÄÖ_\s]*$/"
+						placeholder = "Namn"
+						required />
+				</div>
+				<p ng-show="formEdit.new_name.$touched && formEdit.new_name.$invalid" class="text-danger">Namnet är ogiltigt. OBS strängen måste bestå av minst 4 tecken, och max 24 .</p>
+
+				<div class="form-group">
+					<label for="text">Beskrivning</label>
+					<textarea
+						name="description"
+						id="text"
+						ng-model="form.description"
+						class="form-control"
+						ng-minlength = 3
+						ng-maxlength="4500"
+						placeholder = "Beskrivning"
+						rows="8"
+						required/></textarea>
+				</div>
+				<p ng-show="formEdit.description.$error.minlength" class="help-block">Beskrivningen är för kort, eller saknas.</p>
+				<p ng-show="formEdit.description.$error.maxlength" class="help-block">Beskrivningen är för lång.</p>
+			</div>
+			<div class="col-sm-4 pull-right ">
+				<div class="portrait_medium" style="background-image:url('{{currentPortrait.url}}')"></div>
+			</div>
+		</div>
+
+		<div class="form-group">
+			<label for="secret_data">Hemlig information</label>
+			<textarea
+				name="secret_data"
+				id="secret_data"
+				ng-model="form.secret_data"
+				class="form-control"
+				ng-maxlength="4500"
+				rows="8"/></textarea>
+		</div>
+		<p ng-show="formEdit.secret_data.$error.maxlength" class="help-block">Den hemliga informationen är för lång.</p>
+
+		<div class="form-group">
+			<button class="btn btn-danger " ng-click="leaveCampaign()">Lämna äventyret</button>
+			<button class="btn btn-default pull-right" ng-click="cancelEdit()">Ångra</button>
+			<input
+				type		="submit"
+				class		="btn btn-primary pull-right"
+				ng-disabled	="formEdit.$invalid"
+				value		="Spara">
+			</input>
+		</div>
+	</form>
+
+	<portrait-pagination></portrait-pagination>
+
+</div>

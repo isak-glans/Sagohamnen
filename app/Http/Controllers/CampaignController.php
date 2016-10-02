@@ -3,72 +3,88 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-
-use DB;
 use App\Http\Requests;
+use Auth;
+use Sagohamnen\Campaign\Campaign;
+use Sagohamnen\Campaign\Campaign_user;
+//use App\Post;
+// use App\Sh_library\Transformers\DbResults;
+use Sagohamnen\Campaign\Campaign_repository;
+use Sagohamnen\Campaign\Campaign_BL;
 
-use App\Campaign;
-use App\Campaign_user;
-use App\Post;
-use App\Sh_library\Transformers\CampaignTransformer;
 
 class campaignController extends ApiController
 {
-	protected $campaignTransformer;
+	protected $Campaign_repository;
+    protected $Camp_BL;
 
-	public function __construct(CampaignTransformer $campaignTransformer)
+	public function __construct()
 	{
-		$this->campaignTransformer = $campaignTransformer;
+		$this->Campaign_repository = new Campaign_repository();
+        $this->Camp_BL = new Campaign_BL();
 	}
 
 	public function index() {
-
-		$campaigns = DB::table('sh_campaigns')->leftJoin('sh_users', 'sh_campaigns.gm_id', '=', 'sh_users.id')
-            ->select(['sh_campaigns.*', 'sh_users.name as gm_name'])
-            ->where('sh_campaigns.status', '=', 1)
-            ->orderBy('sh_users.updated_at', 'desc')
-            ->get();
-
-		/*$campaigns = Campaign::where('status', '=', 1)->with(['gamemaster' => function($query){
-		    $query->select(['id', 'gamemaster_id', 'name', 'updated_at']);
-			}])->select('id', 'name')->get()->sortByDesc(function ($campaign) {
-		    return $campaign->gamemaster->updated_at;
-		});*/
-
-		$array_result = $this->campaignTransformer->transformCollection($campaigns, 'home');
-
-		return response()->json( $array_result );
+        // This method is almost the same as campaigns_per_page.
+        return $this->campaigns_per_page(1);
 	}
-    //
-    public function show($id)
+
+    public function campaigns_per_page($page_nr)
     {
-    	$result = Campaign::find($id)->first();
-    	if($result == null) return response()->json( $result );
+        try {
+            $user_allowed_create_new = false;
+            // Get info
+            $campaigns = $this->Campaign_repository->campaigns($page_nr);
+            if ( ! $campaigns ) return $this->respondNotFound();
 
-		$result->gamemaster_name= $result->gamemaster()->value('name');
+            // Count nr players in each campaign.
+            for ($i=0; $i < count($campaigns); $i++) :
+                $campaigns[$i]->nr_players = count($campaigns[$i]->players);
+                // Remove list of names on players,
+                // to save bandwith with info sent back to client.
+                // unset($campaigns[$i]->players);
+            endfor;
 
-		return response()->json( $result );
+            // Can User make a new campaign?
+            if (Auth::check()) :
+                $user_id = Auth::id();
+                $nr_campaigns_as_gamemaster = $this->Campaign_repository->count_campagins_as_gamemaster($user_id);
+                $user_allowed_create_new = $nr_campaigns_as_gamemaster <= 2;
+            endif;
+
+            return $this->respond([
+                    'campaigns' => $campaigns,
+                    'allowed_make_new' => $user_allowed_create_new]);
+        }
+        catch (Exception $e)
+        {
+            return $this->respondWithError("Ett fel uppstod på sidan.");
+        }
     }
 
+    // Get info about a single campaign.
+    public function show($campaign_id)
+    {
+        try
+        {
+            $campaign = $this->Camp_BL->single_campaign($campaign_id);
+            if ( ! $campaign ) return $this->respondNotFound();
+            return $this->respond($campaign);
+        }
+        catch(Exeption $e)
+        {
+            $this->respondWithError("Ett fel uppstod på sidan.");
+        }
+
+    }
+
+    // Save in database.
     public function store(Request $request)
     {
+        // User signed in?
+        if ( !Auth::check() ) return $this->respondNotAuthorized();
 
-        /*if ( Input::has('name') && Input::has('text') && Input::has('genre') ) :
-            $name = Input::get('name');
-            $text = Input::get('text');
-            $text = Input::get('genre');
-        else :
-            return $this->respondMissingInput();
-        endif;*/
-
-        // Get the user id
-        /*if (Auth::check())
-        {
-            // The user is logged in...
-            $id = Auth::id();
-        } else {
-            return $this->respondNotAuthorized();
-        }*/
+        $user_id = Auth::id();
 
         $this->validate($request, [
             'name' => 'required|min:4|max:1000',
@@ -76,42 +92,59 @@ class campaignController extends ApiController
             'genre' => 'required|max:255',
         ]);
 
-
-
-
         echo "All fine";
         //return response()->json( array( 'name' => ) );
 
-        /*$table->increments('id')->unsigned();
-                $table->text('name', 1000);
-                $table->text('text', 4500);
-                $table->string('genre', 255);
-                $table->integer('gm_id')->unsigned();
-                $table->tinyInteger("nr_players")->unsigned();
-                $table->integer("nr_entries")->unsigned();
-                $table->timestamps();
-                $table->tinyInteger("rating")->unsigned();
-                $table->tinyInteger("status")->unsigned()->comments = "0=archived, 1= active";*/
+    }
+
+    public function update(Request $request, $id) {
+        $campaign = Campaign::find($id);
+
+        if ( ! $campaign ) :
+            return $this->respondNotFound('Kampanjen hittades inte');
+        endif;
+
+        $this->validate($request, [
+            'name' => 'required|min:4|max:255',
+            'description' => 'required|min:4|max:4500',
+            'genre' => 'required|max:255',
+            'max_nr_players' => 'required|numeric|digits_between:1,10'
+        ]);
+
+        $campaign->name             = $request->input('name');
+        $campaign->genre            = $request->input('genre');
+        $campaign->description      = $request->input('description');
+        $campaign->max_nr_players   = $request->input('max_nr_players');
+        $campaign->save();
 
     }
 
-    public function create()
+    public function apply_to_campaign($campaign_id)
     {
-    	echo "inde";
+        $BL = new Campaign_BL();
+        try {
+            if ( $BL->apply_to_campaign($campaign_id) ) :
+                return $this->respond(['apply_succesful' => true ]);
+            else:
+                return $this->respondNotAuthorized("Denna handling är inte tillåten.");
+            endif;
+        } catch(Exception $e){
+            $this->respondInternalError();
+        }
     }
 
-    public function edit($id)
+    public function identify($campaign_id)
     {
-    	echo "inde";
-    }
-
-    public function update($id)
-    {
-    	echo "inde";
+        try {
+            $campaign = $this->Camp_BL->identify_campaign($campaign_id);
+            return $this->respond($campaign);
+        } catch (Exception $e) {
+            $this->respondInternalError();
+        }
     }
 
     public function destroy($id)
     {
-    	echo "inde";
+    	echo "index";
     }
 }

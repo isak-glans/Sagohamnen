@@ -1,6 +1,8 @@
 // @import "node_modules/bootstrap-sass/assets/stylesheets/bootstrap";
 
 @import "bower_components/bootstrap-sass/assets/stylesheets/_bootstrap.scss";
+@import "bower_components/font-awesome/scss/font-awesome.scss";
+@import "bower_components/bootstrap-social/bootstrap-social.scss";
 @import '_init';
 
 /*
@@ -72,7 +74,6 @@
 		.loginBt {
 			background-color: rgba(0,0,0,0.8);
 			padding: 5px 10px;
-			border: 1px solid grey;
 			color: white;
 		    text-decoration: none;
 		    i {
@@ -136,6 +137,7 @@
 */
 #app_content {
 	min-height: 600px;
+	margin: 20px 70px;
 }
 
 
@@ -149,6 +151,46 @@
 	width: 100%;
 	background-color: #8ea9ce;
 }
+
+/*
+	==============================================
+		Campaign
+   	==============================================
+*/
+
+@import 'pages/_single_campaign';
+
+/*
+	==============================================
+		Chronicle
+   	==============================================
+*/
+.chronicle_entry {
+	margin: 10px 0;
+	border-bottom: 1px solid #e3dcdc;
+	padding-bottom: 5px;
+}
+.chronicle_rp_image {
+	max-height : 50px;
+	max-width: 50px;
+}
+.chronicle_gm_image {
+	max-height : 150px;
+	max-width: 150px;
+}
+
+
+/*
+	==============================================
+		Single Character
+   	==============================================
+*/
+@import 'pages/_character_single';
+
+
+/* Import specific pages */
+@import 'pages/_campaign_apply';
+@import 'pages/_media';
 
 /* Media queries*/
 @import 'media_queries/_large';

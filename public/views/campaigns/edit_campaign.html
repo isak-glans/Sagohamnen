@@ -1,0 +1,73 @@
+
+<div ng-controller="CampaignController" ng-init="editCampaigns_setup()">
+	<h1>{{ campaign.name }}</h1>
+
+	<form name="formEdit" ng-submit="editCampaign_save()" novalidate>
+		<div class="form-group" ng-class="{ 'has-error' : formEdit.new_name.$invalid && formEdit.new_name.$dirty }">
+			<label for="new_name">Namn</label>
+			<input
+				type="text"
+				name="new_name"
+				id="name"
+				ng-model="form.name"
+				class="form-control"
+				ng-minlength="4"
+				ng-maxlength="25"
+				required />
+		</div>
+		<p ng-show="formEdit.new_name.$touched && formEdit.new_name.$invalid" class="text-danger">Namnet är ogiltigt. OBS strängen måste bestå av minst 4 tecken, och max 24 .</p>
+
+		<div class="form-group" ng-class="{ 'has-error' : formEdit.genre.$invalid && formEdit.genre.$dirty }">
+			<label for="genre">Genre</label>
+			<input type="text"
+				name="genre"
+				id="genre"
+				ng-model="form.genre"
+				class="form-control"
+				ng-minlength="3"
+				ng-maxlength="25"
+				required/>
+		</div>
+		<p ng-show="formEdit.genre.$touched && formEdit.genre.$invalid" class="text-danger">Genré är ogiltig. OBS strängen måste bestå av 4-25 tecken.</p>
+
+		<div class="form-group">
+			<label for="text">Beskrivning</label>
+			<textarea
+				name="description"
+				id="text"
+				ng-model="form.description"
+				class="form-control"
+				ng-maxlength="4500"
+				rows="8"
+				required/></textarea>
+		</div>
+		<p ng-show="formEdit.description.$error.minlength" class="help-block">Beskrivningen är för kort, eller saknas.</p>
+		<p ng-show="formEdit.description.$error.maxlength" class="help-block">Beskrivningen är för långt.</p>
+
+		<div class="form-group">
+			<label for="max_nr_players">Maxantal spelare</label>
+			<input
+				type="number"
+				id = "max_nr_players"
+				name="max_nr_players"
+				ng-model="form.max_nr_players"
+				min="1"
+				max="10"
+				class="form-control" \>
+		</div>
+		<p ng-show="formEdit.max_nr_players.$touched && formEdit.max_nr_players.$invalid" class="text-danger">Maxantalet spelare är ogiltigt. Siffran får minst vara 1, och högst 10.</p>
+
+		<div class="form-group">
+			<div class="col-sm-12">
+				<button class="btn btn-default pull-right" ng-click="editCampaign_cancel()">Ångra</button>
+				<input
+					type		="submit"
+					class		="btn btn-primary pull-right"
+					ng-disabled	="formEdit.$invalid"
+					value		="Spara">
+				</input>
+			</div>
+		</div>
+	</form>
+
+</div>

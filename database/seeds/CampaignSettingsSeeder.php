@@ -11,13 +11,19 @@ class CampaignSettingsSeeder extends Seeder
      */
     public function run()
     {
-        DB::table('sh_campaign_settings')->insert([
-            'campaign_id'              	=> 1,
-            'post_per_page'            	=> 10,
-            'chat_expire_days'         	=> 11,
-            'inactivity_days'          	=> 5,
-            'max_nr_players'			=> 6,
-            'chronicle_font_id'        	=> 1,
+        DB::table('campaign_settings')->insert([
+            'campaign_id'               => 1,
+            'post_per_page'             => 10,
+            'chat_expire_days'          => 11,
+            'inactivity_days'           => 5,
+            'chronicle_font_id'         => 1,
         ]);
+
+        /* Schema::create('campaign_media', function (Blueprint $table) {
+            $table->integer('id')->unsigned();
+            $table->integer('campaign_id')->unsigned()->index();
+            $table->text('url');
+            $table->text('descr')->nullable;
+        });*/
     }
 }

@@ -1,0 +1,60 @@
+<div ng-controller="CampaignController" ng-init="campaign()">
+
+<nav>
+	<a ng_href="/#/home">Hem</a> - {{form.name}}
+</nav>
+
+<h1>{{form.name}}</h1>
+
+<div class="row">
+	<div class="col-sm-6">
+		<ul>
+			<li><label>Genre:</label> {{form.genre}}</li>
+			<li>
+				<label>Spelledare:</label>
+				<a ng-href="/#/user/{{form.gamemaster[0].id}}">{{form.gamemaster[0].name}}</a>
+			</li>
+			<li><label>Startad:</label> {{form.created_at | date: 'yyyy-MM-dd'}}</li>
+			<li><label>Uppdaterad:</label> {{form.updated_at | date: 'yyyy-MM-dd'}}</li>
+			<li><label>Antal spelare:</label> {{form.nrPlayers}}/{{form.max_nr_players}}</li>
+			<li><label>Betyg:</label> {{form.rating}}</li>
+		</ul>
+	</div>
+	<div class="col-sm-6">
+		<img ng-src="{{form.media.url}}" alt="{{form.media.descr}}" id="campaign_image">
+	</div>
+</div>
+
+<div ng-bind-html="form.description | show_linebreaks " class="text_easy_read" id="campaign_descr"></div>
+
+
+<div class="row">
+	<div class="col-sm-6">
+		<label>Spelare</label>
+		<div class="row players">
+			<div ng-repeat="player in form.players" class="col-sm-2">
+				<a ng-href="#/character/{{player.id}}"><div style="background-image:url('{{player.portrait.thumbnail}}');" class="portrait_thumbnail"></div></a>
+				<span class="applyer_name">{{player.name}}</span>
+			</div>
+		</div>
+	</div>
+
+	<div class="col-sm-6">
+		<label>Ansökningar</label>
+		<div class="row appliers">
+			<div ng-repeat="applyer in form.appliers" class="col-sm-2">
+				<a ng-href="#/character/{{applyer.id}}"><div style="background-image:url('{{applyer.portrait.thumbnail}}');" class="portrait_thumbnail"></div></a>
+				<span class="applyer_name">{{applyer.name}}</span>
+			</div>
+		</div>
+	</div>
+</div>
+<button ng-show="form.can_apply" ng-click="applyToCampaign()">Ansök att delta</button>
+
+<div ng-show="form.can_edit">
+	<a ng-href="/#/campaign/{{form.id}}/edit">Redigera info</a> |
+	<a ng-show="form.can_edit" ng-href="/#/campaign_users/{{form.id}}/edit">Redigera deltagare</a>
+</div>
+
+
+

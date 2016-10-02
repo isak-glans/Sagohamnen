@@ -25,10 +25,15 @@ class SocialAccountService
 
             if (!$user) {
 
+                // 'name'     => $providerUser->getName(),
                 $user = User::create([
-                    'email' => $providerUser->getEmail(),
-                    'name' => $providerUser->getName(),
+                    'email'     => $providerUser->getEmail(),
+                    'name'      => $providerUser->getName(),
+                    'status'    => 1,
+                    'description' => "Saknas.",
                 ]);
+
+                //$user->save();
             }
 
             $account->user()->associate($user);
