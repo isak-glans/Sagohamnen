@@ -23,22 +23,22 @@
 	<div class="row">
 		<div class="col-sm-6">
 			<label>Spelare</label>
-			<div ng-repeat="campaign in form.campaigns">
-				<p ng-if="campaign.pivot.status == 1 "><a ng-href="#/campaign/{{campaign.id}}">{{ campaign.name }}</a></p>
+			<div ng-repeat="campaign in form.playing">
+				<p><a ng-href="#/campaign/{{campaign.id}}">{{ campaign.name }}</a></p>
 			</div>
 		</div>
 		<div class="col-sm-6">
 			<label>Spelleder</label>
-			<div ng-repeat="campaign in form.campaigns">
-				<p ng-if="campaign.pivot.status == 2"><a ng-href="#/campaign/{{campaign.id}}">{{ campaign.name }}</a></p>
+			<div ng-repeat="campaign in form.gamemastering">
+				<p><a ng-href="#/campaign/{{campaign.id}}">{{ campaign.name }}</a></p>
 			</div>
 		</div>
 	</div>
 	<div class="row">
 		<div class="col-sm-6">
 			<label>Ansökt</label>
-			<div ng-repeat="campaign in form.campaigns">
-				<p ng-if="campaign.pivot.status == 0 "><a ng-href="#/campaign/{{campaign.id}}">{{ campaign.name }}</a></p>
+			<div ng-repeat="campaign in form.applying">
+				<p><a ng-href="#/campaign/{{campaign.id}}">{{ campaign.name }}</a></p>
 			</div>
 		</div>
 	</div>

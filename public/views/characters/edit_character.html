@@ -55,8 +55,8 @@
 		<p ng-show="formEdit.secret_data.$error.maxlength" class="help-block">Den hemliga informationen är för lång.</p>
 
 		<div class="form-group">
-			<button class="btn btn-danger " ng-click="leaveCampaign()">Lämna äventyret</button>
-			<button class="btn btn-default pull-right" ng-click="cancelEdit()">Ångra</button>
+			<button type="button" class="btn btn-danger" ng-click="leaveCampaign()">Ta bort</button>
+			<button type="button" class="btn btn-default pull-right" ng-click="cancelEdit()">Ångra</button>
 			<input
 				type		="submit"
 				class		="btn btn-primary pull-right"

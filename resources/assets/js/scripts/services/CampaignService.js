@@ -1,12 +1,12 @@
 angular.module('ShApp')
 
-.factory('CampaignService', function($http, $sce, DbService) {
+.factory('CampaignService', function($http, $sce, DbService, config) {
 	var factory = {};
 
 	factory.campaign = function(data, myId)
 	{
-        var status_applying = 1;
-        var status_playing = 2;
+        var status_applying = config.charStatusApplying;
+        var status_playing = config.charStatusPlaying;
 
         data.created_at = new Date( data.created_at );
         data.updated_at = new Date( data.updated_at );

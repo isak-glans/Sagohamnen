@@ -10,7 +10,6 @@ angular.module('ShApp')
 		var result;
 
 		return DbService.searchPortrait(tag, pageNr).then(function successCallback(response) {
-            console.log(response);
             /*jQuery.each(response.media, function(index, item) {
                 item.clicked = false;
             });*/

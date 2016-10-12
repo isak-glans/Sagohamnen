@@ -4,8 +4,8 @@ Route::auth();
 
 Event::listen('Illuminate\Database\Events\QueryExecuted', function ($query) {
     /*var_dump($query->sql);
-    var_dump($query->bindings);*/
-    //var_dump($query->time);
+    var_dump($query->bindings);
+    var_dump($query->time);*/
 });
 
 Route::get('blogrep', function() {
@@ -48,9 +48,12 @@ Route::group(['prefix' => 'api/', 'middleware' => 'auth'], function () {
 	//Route::resource('campaigns', 'CampaignController');
 	Route::resource('campaign', 'CampaignController', ['only' => ['store', 'update', 'edit']]);
 	Route::resource('campaign_user', 'CampaignUserController', ['only' => ['store', 'update', 'edit']]);
+	Route::get('camp_applications_setup/{campaign_id}', 'CampaignController@campaignApplication_setup');
 	Route::get('apply_to_campaign/{campaign_id}', 'CampaignController@apply_to_campaign' );
 	Route::resource('user', "UserController", ['only' => ['store', 'update', 'edit']]);
 	Route::resource('character', 'CharacterController', ['only' => ['store', 'update', 'edit']]);
+	Route::get('character/{id}/leave_campaign', 'CharacterController@leave_campaign');
+	Route::get('character/{id}/set_status/{status}', 'CharacterController@set_status');
 	Route::get('admin', function() {
 		echo "Authenticated...";
 	});

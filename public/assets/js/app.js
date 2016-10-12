@@ -381,10 +381,12 @@ var sagohamnenApp = angular.module('ShApp', ["ngRoute", "ngSanitize", "ngResourc
 sagohamnenApp.config(function($routeProvider) {
     $routeProvider
     .when("/", {
-        templateUrl : "views/home.html"
+        templateUrl : "views/campaigns/all_campaigns.html",
+        controller : "CampaignController"
     })
     .when("/home", {
-        templateUrl : "views/home.html"
+        templateUrl : "views/campaigns/all_campaigns.html",
+        controller : "CampaignController"
     })
     .when("/user/edit/:userId", {
         templateUrl : "views/users/edit_user.html",
@@ -396,7 +398,12 @@ sagohamnenApp.config(function($routeProvider) {
     })
     .when("/campaign/:campaignId", {
         templateUrl : "views/campaigns/campaign.html",
-        controller  : 'CampaignController'
+        controller  : 'SingleCampaignCtrl',
+        resolve: {
+            campaignData: function(CampaignFactory,$route){
+                return CampaignFactory.get({campaign_id : $route.current.params.campaignId}).$promise;
+            }
+        }
     })
     .when("/campaign/:campaignId/edit", {
         templateUrl : "views/campaigns/edit_campaign.html",
@@ -404,11 +411,16 @@ sagohamnenApp.config(function($routeProvider) {
     })
     .when("/campaign_apply/:campaignId", {
         templateUrl : "views/campaigns/campaign_apply.html",
-        controller  : 'CampaignController'
+        controller  : 'ApplyCampaignCtrl'
     })
-    .when("/campaign_participants/:campaignId", {
-        templateUrl : "views/campaigns/campaign_participants.html",
-        controller  : 'CampaignController'
+    .when("/campaign_applications/:campaignId", {
+        templateUrl : "views/campaigns/camp_applications.html",
+        controller  : 'CampApplicationCtrl',
+        resolve: {
+            campaignData: function(CampaignFactory,$route){
+                return CampaignFactory.applyingPlayingCharacters({id : $route.current.params.campaignId}).$promise;
+            }
+        }
     })
     .when("/campaign/new", {
         templateUrl : "views/campaigns/new_campaign.html",
@@ -443,131 +455,44 @@ sagohamnenApp.config(function($routeProvider) {
     });
 });
 
+sagohamnenApp.config(['$httpProvider', function ($httpProvider) {
+    $httpProvider.interceptors.push(['$q', '$location', function ($q, $location) {
+        return {
+            'responseError': function(response) {
+                if(response.status === 401 || response.status === 403) {
+                    $location.path('/error/403'); // Replace with whatever should happen
+                }
+                 if(response.status === 500) {
+                    $location.path('/error/500');
+                 }
+                return $q.reject(response);
+            }
+        };
+    }]);
+}]);
+
+
 sagohamnenApp.filter("show_linebreaks", function($filter) {
  return function(data) {
    if (!data) return data;
    return data.replace(/\n\r?/g, '<br />');
  };
 });
-angular.module('ShApp')
 
-// inject the Comment service into our controller
-.controller('ApplyCampaignCtrl', function($scope, $location, $routeParams, CampaignService, Campaign, CampaignUser ) {
-
-	$scope.form;
-    $scope.campaign = { id : 0, name : ""};
-    $scope.currentPortrait = {id : 0, name: ""};
-    $scope.defaultPortrait = { id: 6,  url: "http://localhost:8000/assets/img/portraits/default.png" };
-
-	$scope.campaignApplication_init = function() {
-        var campaignId = $routeParams.campaignId;
-        $scope.currentPortrait.id = $scope.defaultPortrait.id;
-        $scope.currentPortrait.url = $scope.defaultPortrait.url;
-        Campaign.identify({ id: campaignId }, function(data) {
-			$scope.campaign.id = data.id;
-            $scope.campaign.name = data.name;
-		}, function(error) {
-			$location.path("error/500");
-		});
-    }
-
-    $scope.save = function() {
-        var campaignId = $routeParams.campaignId;
-        $scope.apply.portrait_id = $scope.currentPortrait.id;
-        $scope.apply.campaign_id = $scope.campaign.id;
-        CampaignUser.save($scope.apply, function(data){
-            //console.log(data);
-            $location.path("campaign/" + $scope.campaign.id);
-        }, function(error){
-            //console.log("error");
-            $location.path("error/403");
-        });
-    }
-
-    $scope.cancel = function() {
-    	$location.path("campaign/" + $scope.campaign.id);
-    }
+sagohamnenApp.constant('config', {
+    charStatusNone                  :0,
+    charStatusApplying              :1,
+    charStatusPlaying               :2,
+    charStatusSlp                   :3,
+    charStatusDeleted               :4,
+    campaginUserStatusNone          :0,
+    campaignUserStatusApplying      :1,
+    campaignUserStatusPlaying       :2,
+    campaignUserStatusGamemaster    :3,
+    campaignUserStatusBlocked       :4,
 });
-angular.module('ShApp')
-
-// inject the Comment service into our controller
-.controller('CampaignController', function($scope, $http, DbService, $routeParams, $sce, $location, CampaignService, $route, MediaService, $timeout ) {
-
-    $scope.campaignData = [];
-    $scope.user = {};
-    $scope.is_user_logged_in = false;
-    $scope.is_user_gm = false;
-    $scope.can_apply = false;
-    $scope.nrPages = 0;
-
-    $scope.campaign = function() {
-        var campaignId = $routeParams.campaignId;
-        if( campaignId == null) $location.path("error/404");
-
-        DbService.getCampaign(campaignId).then(function successCallback(response) {
-            $scope.form = CampaignService.campaign(response.data,$scope.myId);
-        }, function errorCallback(response) {
-            if(response.status == 404) {
-                $location.path("error/404");
-            }
-        });
-    }
-
-    $scope.getCampaigns = function() {
-        DbService.getCampaigns().then(function successCallback(response) {
-            $scope.campaignData = response.data.campaigns;
-            $scope.allowed_make_new = Boolean(response.data.allowed_make_new);
-        }, function errorCallback(response) {
-            if(response.status == 404) {
-                $location.path("error/404");
-            }
-        });
-    };
-
-    $scope.editCampaigns_setup = function() {
-        var theId = $routeParams.campaignId;
-        if ( ! theId === parseInt(theId, 10) || theId == null ) {
-            $location.path("error/404");
-        }
-
-        DbService.getCampaign(theId).then(function succesCallback(response) {
-            $scope.campaign = CampaignService.campaign(response.data,$scope.myId);
-            //$scope.campaignData = response.campaign;
-            $scope.form = angular.copy($scope.campaign);
-        }, function errorCallback(response) {
-            $location.path("error/500");
-        });
-    }
-
-    $scope.editCampaign_save = function() {
-        var changedData = $scope.form;
-
-        DbService.updateCampaign(changedData).then(function succesCallback(response) {
-            //$scope.campaignData = response.data;
-            $location.path("campaign/" + changedData.id);
-        }, function errorCallback(response) {
-            $location.path("error/500");
-        });
-    }
-
-    $scope.editCampaign_cancel = function() {
-        $location.path("campaign/" + $scope.form.id);
-    }
-
-    $scope.applyToCampaign = function() {
-        var userId = $scope.myId;
-        var campaignId = $scope.form.id;
-        $location.path("campaign_apply/" + campaignId);
-    }
-
-    $scope.newCampaing = function() {
-        console.log("New campaign");
-    }
 
 
-    //$scope.getCampaigns();
-
-});
 angular.module('ShApp')
 
 // inject the Comment service into our controller
@@ -594,16 +519,16 @@ angular.module('ShApp')
 angular.module('ShApp')
 
 // inject the Comment service into our controller
-.controller('EditCharacterCtrl', function($scope, $location, $routeParams, CharacterFactory ) {
+.controller('EditCharacterCtrl', function($scope, $location, $routeParams, CharacterFactory, config ) {
 
 	$scope.form = {};
 	$scope.currentPortrait = {id : 0, url: ""};
 
-	var char_status_none     = 0;
-	var char_status_applying = 1;
-	var char_status_playing  = 2;
-	var char_status_slp      = 3;
-	var char_status_blocked  = 4;
+	var char_status_none     = config.charStatusNone;
+	var char_status_applying = config.charStatusApplying;
+	var char_status_playing  = config.charStatusplaying;
+	var char_status_slp      = config.charStatusSlp;
+	var char_status_blocked  = config.charStatusBlocked;
 
 	//var status = { 0=>'Arkiverad', 1=>'Ansöker', 2=>'Spelare', 3=>'SLP'};
 
@@ -620,15 +545,14 @@ angular.module('ShApp')
 
 			$scope.headline = angular.copy(response.name);
 	      $scope.form = response;
-
-	      console.log(response);
+	      //console.log(response);
 	    }, function(response) {
 	      if(response.status == 404) $location.path("error/404");
 	    } );
 	}
 
 	$scope.saveEdit = function(){
-		console.log("Dags att spara");
+		//console.log("Dags att spara");
 
 		var postData = {};
 		postData.id 					= $scope.form.id;
@@ -638,10 +562,10 @@ angular.module('ShApp')
 		postData.portrait_id 		= $scope.currentPortrait.id;
 
 		CharacterFactory.save(postData, function(response) {
-			console.log(response);
+			//console.log(response);
 			$location.path("character/"+postData.id);
 	    }, function(response) {
-    		console.log(response);
+    		//console.log(response);
 	      //if(response.status == 404) $location.path("error/404");
 	    } );
 
@@ -655,13 +579,19 @@ angular.module('ShApp')
 	$scope.leaveCampaign = function()
 	{
 		console.log("Ska du verkligen lämna?");
+		CharacterFactory.leaveCampaign({id : $scope.form.id }, function(response){
+			console.log(response);
+			$location.path("character/" + $scope.form.id);
+		}, function(response){
+			console.log(response);
+		});
 	}
 });
 
 angular.module('ShApp')
 
 // inject the Comment service into our controller
-.controller('MainController', function($scope, $http, DbService, UserService) {
+.controller('MainController', function($scope, $http, DbService, NavigationService, UserService) {
 
 	/*--------------------------------*/
     /*       User methods             */
@@ -677,8 +607,12 @@ angular.module('ShApp')
     $scope.signedIn = false;
     $scope.userOptions = [];
 
+
     var init = function() {
         loginUser();
+        //NavigationService.set([]);
+        //console.log("Innen i maincrt");
+        //$rootScope.navigation.length = 0;
     }
     init();
 
@@ -748,10 +682,8 @@ angular.module('ShApp')
     }
 
 	$scope.searchPortrait = function(searchTag, pageNr) {
-        console.log("inne");
         $scope.currentSearchPage = pageNr;
 		MediaService.searchPortrait(searchTag, pageNr).then(function successCallback(response) {
-            console.log(response);
             var images_per_page = response.images_per_page;
             $scope.portraits = response.result;
             $scope.portraits_counted = response.nr_results;
@@ -766,7 +698,6 @@ angular.module('ShApp')
     {
         // If parent scope have currentPortrait attribute.
         if ( !angular.isUndefined($scope.currentPortrait) ) {
-            console.log("Inne");
         	$scope.currentPortrait.id = portrait.id;
             $scope.currentPortrait.url = portrait.medium;
         }
@@ -785,14 +716,14 @@ angular.module('ShApp')
 angular.module('ShApp')
 
 // inject the Comment service into our controller
-.controller('SingleCharacterCtrl', function($scope, $location, $routeParams, CharacterFactory ) {
+.controller('SingleCharacterCtrl', function($scope, $location, $routeParams, CharacterFactory, config ) {
 
   $scope.form = {};
-  var char_status_none     = 0;
-  var char_status_applying = 1;
-  var char_status_playing  = 2;
-  var char_status_slp      = 3;
-  var char_status_blocked  = 4;
+  var char_status_none     = config.charStatusNone;
+  var char_status_applying = config.charStatusApplying;
+  var char_status_playing  = config.charStatusplaying;
+  var char_status_slp      = config.charStatusSlp;
+  var char_status_blocked  = config.charStatusBlocked;
 
 	$scope.setup = function() {
 		var characterId = $routeParams.characterId;
@@ -801,13 +732,15 @@ angular.module('ShApp')
     var theCharacter = CharacterFactory.get({id: characterId}, function(response) {
       response.created_at = new Date( response.created_at );
       response.updated_at = new Date( response.updated_at );
-      var relation = "";
-      if (response.status == char_status_none) relation = "Arkiverad";
-      if (response.status == char_status_applying) relation = "Ansöker att delta";
-      if (response.status == char_status_playing) relation = "Spelare";
-      if (response.status == char_status_slp) relation = "Spelledarekaraktär";
-      response.status = relation;
       $scope.form = response;
+      if (response.status == char_status_none) {
+        $scope.form.relation = "Arkiverad";
+        $scope.form.archived = true;
+      } else $scope.form.archived = false;
+      if (response.status == char_status_applying) $scope.form.relation = "Ansöker att delta";
+      if (response.status == char_status_playing) $scope.form.relation = "Spelare";
+      if (response.status == char_status_slp) $scope.form.relation = "Spelledarekaraktär";
+
     }, function(response) {
       if(response.status == 404) $location.path("error/404");
     } );
@@ -817,13 +750,14 @@ angular.module('ShApp')
 angular.module('ShApp')
 
 // inject the Comment service into our controller
-.controller('UserController', function($scope, $http, DbService, $routeParams, $sce, $location ) {
+.controller('UserController', function($scope, $http, DbService, $routeParams, $sce, $location, $rootScope ) {
 
 	$scope.userData = [];
 	$scope.userFound = false;
 
 	$scope.getSingleUser = function()
 	{
+
 		var theId = $routeParams.userId;
         if( theId == null) {
             console.log("The user ID is missing.");
@@ -831,6 +765,7 @@ angular.module('ShApp')
         }
 
         DbService.getUser(theId).then(function successCallback(response) {
+            $rootScope.pagePath = response.data.name;
 			console.log(response);
             $scope.form = response.data;
             /*$scope.form.campaigns = response.data.campaigns;*/
@@ -866,11 +801,12 @@ angular.module('ShApp')
 });
 angular.module('ShApp')
 
-.factory('Campaign', ['$resource',
+.factory('CampaignFactory', ['$resource',
     function($resource) {
         //return $resource('/api/campagin/:campaign_id');
-        return $resource('/api/campagin/:campaign_id', {}, {
-            identify : { method : "GET", url: "/api/identify_campaign/:id" }
+        return $resource('/api/campaign/:campaign_id', {}, {
+            identify : { method : "GET", url: "/api/identify_campaign/:id" },
+            applyingPlayingCharacters : { method : "GET", url: "/api/camp_applications_setup/:id"}
         });
     }
 ]);
@@ -888,6 +824,8 @@ angular.module('ShApp')
     function($resource) {
         //return $resource('/api/campagin/:campaign_id');
         return $resource('/api/character/:id', {}, {
+        	leaveCampaign : { method : "GET", url: "/api/character/:id/leave_campaign" },
+        	changeStatus : {method: "GET", url: "/api/character/:id/status/:status" }
         });
     }
 ]);
@@ -909,13 +847,13 @@ angular.module('ShApp')
 });
 angular.module('ShApp')
 
-.factory('CampaignService', function($http, $sce, DbService) {
+.factory('CampaignService', function($http, $sce, DbService, config) {
 	var factory = {};
 
 	factory.campaign = function(data, myId)
 	{
-        var status_applying = 1;
-        var status_playing = 2;
+        var status_applying = config.charStatusApplying;
+        var status_playing = config.charStatusPlaying;
 
         data.created_at = new Date( data.created_at );
         data.updated_at = new Date( data.updated_at );
@@ -1080,7 +1018,6 @@ angular.module('ShApp')
 		var result;
 
 		return DbService.searchPortrait(tag, pageNr).then(function successCallback(response) {
-            console.log(response);
             /*jQuery.each(response.media, function(index, item) {
                 item.clicked = false;
             });*/
@@ -1099,6 +1036,66 @@ angular.module('ShApp')
 
 	return factory;
 
+});
+angular.module('ShApp')
+
+.factory('NavigationService', function($http, $sce, $rootScope) {
+
+    //$rootScope.navigation.url = {'title' : '', 'active': false, 'url':'#' };
+	var factory = {};
+
+    factory.set = function(navArray){
+        /*$rootScope.navigation.url = url;
+        $rootScope.navigation.title = title;
+        $rootScope.navigation.active = active;*/
+        //$rootScope.navigation.push({'title' : title, 'active': false, 'url':'#' });
+        $rootScope.navigation = navArray;
+        //$rootScope.$apply();
+    }
+
+	return factory;
+
+});
+
+angular.module('ShApp')
+
+.factory('TestService', function($q) {
+	var factory = {};
+
+	factory.tungUppgift = function() {
+		var p = $q.defer();
+		setTimeout(function(){
+			p.resolve("Här är svaret!");
+		}, 5000);
+		return p.promise;
+	}
+
+	factory.tungUppgift2 = function(){
+		var p = $q.defer();
+		setTimeout(function(){
+			p.resolve("Uppg2 svar!");
+			console.log("Upp2 klar.");
+		}, 3000);
+		return p.promise;
+	}
+
+	factory.tungUppgift3 = function(){
+		var p = $q.defer();
+		setTimeout(function(){
+			p.resolve("Uppg3 svar!");
+			console.log("Upp3 klar.");
+		}, 2000);
+		return p.promise;
+	}
+
+	/*TestService.tungUppgift().then(function(svar){
+            console.log("NU är det klart!", svar);
+        })
+            .then(TestService.tungUppgift2)
+            .then(TestService.tungUppgift3)
+            .then(function(){console.log("allt klart!");});*/
+
+	return factory;
 });
 angular.module('ShApp')
 
@@ -1133,5 +1130,268 @@ angular.module('ShApp')
 
 	return factory;
 
+});
+angular.module('ShApp')
+
+// inject the Comment service into our controller
+.controller('ApplyCampaignCtrl', function($scope, $location, $routeParams, CampaignService, CampaignFactory, CampaignUser ) {
+
+    console.log("inne i kampapply");
+
+	$scope.form;
+    $scope.campaign = { id : 0, name : ""};
+    $scope.currentPortrait = {id : 0, name: ""};
+    $scope.defaultPortrait = { id: 6,  url: "http://localhost:8000/assets/img/portraits/default.png" };
+
+	$scope.campaignApplication_init = function() {
+        var campaignId = $routeParams.campaignId;
+        $scope.currentPortrait.id = $scope.defaultPortrait.id;
+        $scope.currentPortrait.url = $scope.defaultPortrait.url;
+        CampaignFactory.identify({ id: campaignId }, function(data) {
+			$scope.campaign.id = data.id;
+            $scope.campaign.name = data.name;
+		}, function(error) {
+			$location.path("error/500");
+		});
+    }
+
+    $scope.save = function() {
+        var campaignId = $routeParams.campaignId;
+        $scope.apply.portrait_id = $scope.currentPortrait.id;
+        $scope.apply.campaign_id = $scope.campaign.id;
+        CampaignUser.save($scope.apply, function(data){
+            //console.log(data);
+            $location.path("campaign/" + $scope.campaign.id);
+        }, function(error){
+            //console.log("error");
+            $location.path("error/403");
+        });
+    }
+
+    $scope.cancel = function() {
+    	$location.path("campaign/" + $scope.campaign.id);
+    }
+});
+angular.module('ShApp')
+
+// inject the Comment service into our controller
+.controller('CampaignController', function($scope, $http, DbService, $routeParams, $sce, $location, CampaignService, $route, MediaService, $timeout, NavigationService ) {
+
+    $scope.campaignData = [];
+    $scope.user = {};
+    $scope.is_user_logged_in = false;
+    $scope.is_user_gm = false;
+    $scope.can_apply = false;
+    $scope.nrPages = 0;
+
+    NavigationService.set([]);
+
+    $scope.campaign = function() {
+        /*var campaignId = $routeParams.campaignId;
+        if( campaignId == null) $location.path("error/404");
+
+        DbService.getCampaign(campaignId).then(function successCallback(response) {
+            console.log("resultat:", response);
+            $scope.form = CampaignService.campaign(response.data,$scope.myId);
+        }, function errorCallback(response) {
+            if(response.status == 404) {
+                $location.path("error/404");
+            }
+        });*/
+    }
+
+    $scope.getCampaigns = function() {
+        DbService.getCampaigns().then(function successCallback(response) {
+            $scope.campaigns = response.data.campaigns;
+            $scope.can_create = Boolean(response.data.can_create);
+        }, function errorCallback(response) {
+            if(response.status == 404) {
+                $location.path("error/404");
+            }
+        });
+    };
+
+    $scope.editCampaigns_setup = function() {
+        var theId = $routeParams.campaignId;
+        if ( ! theId === parseInt(theId, 10) || theId == null ) {
+            $location.path("error/404");
+        }
+
+        DbService.getCampaign(theId).then(function succesCallback(response) {
+            $scope.campaign = CampaignService.campaign(response.data,$scope.myId);
+            //$scope.campaignData = response.campaign;
+            $scope.form = angular.copy($scope.campaign);
+        }, function errorCallback(response) {
+            $location.path("error/500");
+        });
+    }
+
+    $scope.editCampaign_save = function() {
+        var changedData = $scope.form;
+
+        DbService.updateCampaign(changedData).then(function succesCallback(response) {
+            //$scope.campaignData = response.data;
+            $location.path("campaign/" + changedData.id);
+        }, function errorCallback(response) {
+            $location.path("error/500");
+        });
+    }
+
+    $scope.editCampaign_cancel = function() {
+        $location.path("campaign/" + $scope.form.id);
+    }
+
+    $scope.applyToCampaign = function() {
+        var userId = $scope.myId;
+        var campaignId = $scope.form.id;
+        $location.path("campaign_apply/" + campaignId);
+    }
+
+    $scope.newCampaing = function() {
+        console.log("New campaign");
+    }
+
+    $scope.approveCharacterApply = function(applyer)
+    {
+        console.log("Inne");
+        applyer.status = 2;
+    }
+
+
+    //$scope.getCampaigns();
+
+});
+angular.module('ShApp')
+
+// inject the Comment service into our controller
+.controller('CampApplicationCtrl', function($scope, $routeParams, $location, CampaignFactory, config, NavigationService, campaignData, CharacterFactory ) {
+
+    $scope.data = [];
+    $scope.data.players = [];
+    $scope.data.applicants = [];
+
+	$scope.setupApplications = function(){
+		var campaignId = $routeParams.campaignId;
+        if( campaignId == null) $location.path("error/404");
+        console.log(campaignData);
+        $scope.data.maxNrPlayers = campaignData.max_nr_players;
+
+        $.each(campaignData.characters, function( index, value ){
+            if(value.status == config.charStatusApplying) $scope.data.applicants.push(value);
+            if(value.status == config.charStatusPlaying) $scope.data.players.push(value);
+        });
+
+        // Update the main navigationmenu.
+        NavigationService.set([{"url" : "/#/campaign/"+campaignData.id, 'title': campaignData.name, 'active' : false}, {"url" : '', 'title': 'Ansökningar', 'active' : true }]);
+	}
+
+	$scope.approve_applicant = function(applyer)
+    {
+        console.log("Inne");
+        //moveApplyerToPlayer(applyer);
+        moveCharacter(applyer, $scope.data.applicants, $scope.data.players);
+        CharacterFactory.changeStatus({id : 1, status : 2}, function(response) {
+            console.log(response);
+        }, function(response){
+            console.log("Failure");
+        });
+    };
+
+    $scope.remove_player = function(player)
+    {
+        console.log("Ienn");
+        //$scope.data.players.delete(player);
+        moveCharacter(player, $scope.data.players, $scope.data.applicants);
+    }
+
+    function moveCharacter(character, fromArray, toArray){
+    	// Move it from applyer list to player list.
+        for (var i = 0; i < fromArray.length; i++) {
+            // Find the applyer in list.
+            if (fromArray[i].id == character.id) {
+            	// Remove it from array.
+            	fromArray.splice(i, 1);
+            	toArray.push(character);
+            	i--;
+            }
+        }
+
+    }
+
+});
+angular.module('ShApp')
+
+// inject the Comment service into our controller
+.controller('SingleCampaignCtrl', function($scope, $http, DbService, $routeParams, $sce, $location, $route, MediaService, $timeout, CampaignFactory, CampaignService, config, NavigationService, campaignData) {
+
+	$scope.setupCampaign = function() {
+        console.log("Innen i single camp ctrl");
+        var campaignId = $routeParams.campaignId;
+        if( campaignId == null) $location.path("error/404");
+
+        response = campaignData;
+        //console.log(campaignData);
+        var characters = response.player_characters;
+        response.created_at = new Date( response.created_at );
+        response.updated_at = new Date( response.updated_at );
+
+        //console.log(campaignData.id, campaignData.name, campaignData);
+        NavigationService.set([{"url" : "/#/campaign/"+campaignData.id, 'title': campaignData.name, 'active' : false}]);
+        //[{"url" : "/#/campaign/"+response.id, 'title': response.name, 'active' : false}, {"url" : '', 'title': 'Ansökningar', 'active' : true }]
+
+        response.players = [];
+        response.applicants = [];
+        $.each( response.characters, function( index, value ){
+            if(value.status == config.charStatusApplying) response.applicants.push(value);
+            if(value.status == config.charStatusPlaying) response.players.push(value);
+        });
+        $scope.form = response;
+
+        /*CampaignFactory.get({campaign_id : campaignId}, function(response){
+        	console.log(response)
+
+        	var characters = response.player_characters;
+        	response.created_at = new Date( response.created_at );
+	        response.updated_at = new Date( response.updated_at );
+
+	        var player_characters = response.player_characters;
+	        response.players = [];
+	        response.appliers = [];
+	        $.each( characters, function( index, value ){
+	            if(value.status == config.charStatusApplying) response.appliers.push(value);
+	            if(value.status == config.charStatusPlaying) response.players.push(value);
+	        });
+
+	        $scope.form = response;
+
+        }, function(response){
+        	console.log("Failure");
+        })*/
+    }
+
+    $scope.applyToCampaign = function() {
+        var userId = $scope.myId;
+        var campaignId = $scope.form.id;
+        $location.path("campaign_apply/" + campaignId);
+    }
+
+    $scope.approveCharacterApply = function(applyer)
+    {
+        console.log("Inne");
+        moveApplyerToPlayer(applyer);
+    }
+
+    function moveApplyerToPlayer(applyer){
+    	// Move it from applyer list to player list.
+        for (var i = 0; i < $scope.form.appliers.length; i++) {
+            // Find the applyer in list.
+            if ($scope.form.appliers[i].id == applyer.id) {
+            	// Remove it from array.
+            	$scope.form.appliers.splice(i, 1);
+            	$scope.form.players.push(applyer);
+            	i--;
+            }
+        }
+    }
 });
 //# sourceMappingURL=app.js.map

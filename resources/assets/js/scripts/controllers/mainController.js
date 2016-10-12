@@ -1,7 +1,7 @@
 angular.module('ShApp')
 
 // inject the Comment service into our controller
-.controller('MainController', function($scope, $http, DbService, UserService) {
+.controller('MainController', function($scope, $http, DbService, NavigationService, UserService) {
 
 	/*--------------------------------*/
     /*       User methods             */
@@ -17,8 +17,12 @@ angular.module('ShApp')
     $scope.signedIn = false;
     $scope.userOptions = [];
 
+
     var init = function() {
         loginUser();
+        //NavigationService.set([]);
+        //console.log("Innen i maincrt");
+        //$rootScope.navigation.length = 0;
     }
     init();
 

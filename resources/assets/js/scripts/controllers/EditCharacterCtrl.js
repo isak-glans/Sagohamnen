@@ -1,16 +1,16 @@
 angular.module('ShApp')
 
 // inject the Comment service into our controller
-.controller('EditCharacterCtrl', function($scope, $location, $routeParams, CharacterFactory ) {
+.controller('EditCharacterCtrl', function($scope, $location, $routeParams, CharacterFactory, config ) {
 
 	$scope.form = {};
 	$scope.currentPortrait = {id : 0, url: ""};
 
-	var char_status_none     = 0;
-	var char_status_applying = 1;
-	var char_status_playing  = 2;
-	var char_status_slp      = 3;
-	var char_status_blocked  = 4;
+	var char_status_none     = config.charStatusNone;
+	var char_status_applying = config.charStatusApplying;
+	var char_status_playing  = config.charStatusplaying;
+	var char_status_slp      = config.charStatusSlp;
+	var char_status_blocked  = config.charStatusBlocked;
 
 	//var status = { 0=>'Arkiverad', 1=>'Ansöker', 2=>'Spelare', 3=>'SLP'};
 
@@ -27,15 +27,14 @@ angular.module('ShApp')
 
 			$scope.headline = angular.copy(response.name);
 	      $scope.form = response;
-
-	      console.log(response);
+	      //console.log(response);
 	    }, function(response) {
 	      if(response.status == 404) $location.path("error/404");
 	    } );
 	}
 
 	$scope.saveEdit = function(){
-		console.log("Dags att spara");
+		//console.log("Dags att spara");
 
 		var postData = {};
 		postData.id 					= $scope.form.id;
@@ -45,10 +44,10 @@ angular.module('ShApp')
 		postData.portrait_id 		= $scope.currentPortrait.id;
 
 		CharacterFactory.save(postData, function(response) {
-			console.log(response);
+			//console.log(response);
 			$location.path("character/"+postData.id);
 	    }, function(response) {
-    		console.log(response);
+    		//console.log(response);
 	      //if(response.status == 404) $location.path("error/404");
 	    } );
 
@@ -62,5 +61,11 @@ angular.module('ShApp')
 	$scope.leaveCampaign = function()
 	{
 		console.log("Ska du verkligen lämna?");
+		CharacterFactory.leaveCampaign({id : $scope.form.id }, function(response){
+			console.log(response);
+			$location.path("character/" + $scope.form.id);
+		}, function(response){
+			console.log(response);
+		});
 	}
 });

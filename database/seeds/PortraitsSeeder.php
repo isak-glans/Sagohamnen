@@ -49,6 +49,14 @@ class PortraitsSeeder extends Seeder
             'id'            => 9,
             'thumbnail' => "http://localhost:8000/assets/img/portraits/man11.jpg",
             'medium' =>"http://localhost:8000/assets/img/portraits/man11.jpg"]);
+        DB::table('portraits')->insert([
+            'id'            => 10,
+            'thumbnail' => "http://localhost:8000/assets/img/portraits/man12.jpg",
+            'medium' =>"http://localhost:8000/assets/img/portraits/man12.jpg"]);
+        DB::table('portraits')->insert([
+            'id'            => 11,
+            'thumbnail' => "http://localhost:8000/assets/img/portraits/man13.jpg",
+            'medium' =>"http://localhost:8000/assets/img/portraits/man13.jpg"]);
         /*DB::table('portraits')->insert([
             'id'            => 2,
             'thumbnail' => "www.sagohamnen.se/assets/img/portraits/man1.jpg",

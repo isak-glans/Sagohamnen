@@ -17,6 +17,7 @@ class campaignController extends ApiController
 {
 	protected $Campaign_repository;
     protected $Camp_BL;
+    protected $Character_BL;
 
 	public function __construct()
 	{
@@ -31,30 +32,14 @@ class campaignController extends ApiController
 
     public function campaigns_per_page($page_nr)
     {
+
         try {
-            $user_allowed_create_new = false;
-            // Get info
-            $campaigns = $this->Campaign_repository->campaigns($page_nr);
-            if ( ! $campaigns ) return $this->respondNotFound();
+            $campaigns = $this->Camp_BL->campaigns_per_page($page_nr);
+            if ($campaigns == "not_found") return $this->respondNotFound();
 
-            // Count nr players in each campaign.
-            for ($i=0; $i < count($campaigns); $i++) :
-                $campaigns[$i]->nr_players = count($campaigns[$i]->players);
-                // Remove list of names on players,
-                // to save bandwith with info sent back to client.
-                // unset($campaigns[$i]->players);
-            endfor;
+            $can_create_new = $this->Camp_BL->can_create_new();
 
-            // Can User make a new campaign?
-            if (Auth::check()) :
-                $user_id = Auth::id();
-                $nr_campaigns_as_gamemaster = $this->Campaign_repository->count_campagins_as_gamemaster($user_id);
-                $user_allowed_create_new = $nr_campaigns_as_gamemaster <= 2;
-            endif;
-
-            return $this->respond([
-                    'campaigns' => $campaigns,
-                    'allowed_make_new' => $user_allowed_create_new]);
+            return $this->respond(array('campaigns' => $campaigns, 'can_create' => $can_create_new) );
         }
         catch (Exception $e)
         {
@@ -65,6 +50,9 @@ class campaignController extends ApiController
     // Get info about a single campaign.
     public function show($campaign_id)
     {
+        /*return $this->respondNotAuthorized();
+        throw new exception();*/
+        //sleep(5);
         try
         {
             $campaign = $this->Camp_BL->single_campaign($campaign_id);
@@ -146,5 +134,20 @@ class campaignController extends ApiController
     public function destroy($id)
     {
     	echo "index";
+    }
+
+    public function campaignApplication_setup($campaign_id)
+    {
+        //$Character_BL
+        try {
+            $result = $this->Camp_BL->campaign_applications_setup($campaign_id);
+            if($result === false) return $this->respondNotAuthorized();
+            return $this->respond($result);
+            //return $this->respond($result);
+        } catch(Exception $e)
+        {
+            return $this->respondInternalError();
+        }
+
     }
 }

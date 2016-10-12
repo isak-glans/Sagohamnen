@@ -12,33 +12,75 @@ use Sagohamnen\Chronicle\Chronicle_BL;
 use Sagohamnen\Chat\Chat_BL;
 use Sagohamnen\Character\Character_BL;
 
-
 class Campaign_BL {
 
 	private $camp_rep;
 	private $user_rep;
+	private $char_rep;
+	private $Char_BL;
 
-	private $status_none 		= 0;
-	private $status_applying 	= 1;
-	private $status_player 		= 2;
-	private $status_gamemaster 	= 3;
-	private $status_blocked 	= 4;
+	private $status_none;
+	private $status_applying;
+	private $status_player;
+	private $status_gamemaster;
+	private $status_blocked;
 
 	function __construct() {
 		$this->camp_rep = new Campaign_repository();
 		$this->user_rep = new User_repository();
+
+		$this->status_none 		= config('sh.campaign_user_status_none');
+		$this->status_applying 	= config('sh.campaign_user_status_applying');
+		$this->status_player 	= config('sh.campaign_user_status_playing');
+		$this->status_gamemaster = config('sh.campaign_user_status_gamemaster');
+		$this->status_blocked 	= config('sh.campaign_user_status_blocked');
+	}
+
+	public function campaigns_per_page($page_nr)
+	{
+        // Get info
+        $data = $this->camp_rep->campaigns($page_nr);
+        //dd($data);
+        if ( $data === null ) return "not_found";
+
+        // Count nr players in each campaign.
+        /*echo "inne";
+        for ($i=0; $i < count($data); $i++) :
+            $data[$i]->nr_players = count($data[$i]->players);
+            // Remove list of names on players,
+            // to save bandwith with info sent back to client.
+            // unset($campaigns[$i]->players);
+        endfor;*/
+
+        return $data;
+	}
+
+	public function can_create_new()
+	{
+		$result = false;
+		if (Auth::check()) :
+            $user_id = Auth::id();
+            $nr_campaigns_as_gamemaster = $this->camp_rep->count_campagins_as_gamemaster($user_id);
+            $result = $nr_campaigns_as_gamemaster <= config('sh.max_nr_campaigns_as_gamemaster');
+        endif;
+        return $result;
 	}
 
 	public function single_campaign($campaign_id)
 	{
+		// Get campaign data.
 		$data = $this->camp_rep->campaign($campaign_id);
 		if($data == null) return $data;
+
+		// Start settings.
 		$data->can_apply = false;
 		$data->can_edit = false;
 		$data->unread_chronicle = false;
 		$data->unread_chat = false;
 		$data->nr_players = 0;
-		foreach ($data->player_characters as $character):
+
+		// Count nr playing characters.
+		foreach ($data->characters as $character):
 			if($character->status == $this->status_player) $data->nr_players += 1;
 		endforeach;
 
@@ -56,7 +98,7 @@ class Campaign_BL {
       		$campaign_user_status =  $this->status_none;
       		$data->user_blocked = false;
       	else :
-      		$data->can_edit = $campaign_relation->status == 2? true : false;
+      		$data->can_edit = $campaign_relation->status == config('sh.campaign_user_status_gamemaster')? true : false;
       		$campaign_user_status = $campaign_relation->status;
       		$data->user_blocked = $campaign_user_status === $this->status_blocked;
       		// Have unread chronicles or chat?
@@ -159,6 +201,24 @@ class Campaign_BL {
         return true;
 	}
 
+	public function campaign_applications_setup($campaign_id)
+	{
+		// Check if user signed in.
+		if(Auth::check() === false) return false;
+
+		// Find campaign and it´s name.
+		/*$campaign = $this->camp_rep->identify_campaign($campaign_id);
+		if($campaign === null) return false;*/
+
+		// Get characters applying or playing in campaign.
+		/*$this->Char_BL = new Character_BL();
+		$result = $this->Char_BL->applying_or_playing_in_campaign($campaign_id);*/
+
+		return $this->camp_rep->campaign_applications_setup($campaign_id);
+		// Can GM add more to campaign?
+
+		//return array('characters' => $result, 'campaign' =>$campaign);
+	}
 
 
 	public function identify_campaign($campaign_id)

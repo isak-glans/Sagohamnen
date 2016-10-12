@@ -3,10 +3,12 @@ var sagohamnenApp = angular.module('ShApp', ["ngRoute", "ngSanitize", "ngResourc
 sagohamnenApp.config(function($routeProvider) {
     $routeProvider
     .when("/", {
-        templateUrl : "views/home.html"
+        templateUrl : "views/campaigns/all_campaigns.html",
+        controller : "CampaignController"
     })
     .when("/home", {
-        templateUrl : "views/home.html"
+        templateUrl : "views/campaigns/all_campaigns.html",
+        controller : "CampaignController"
     })
     .when("/user/edit/:userId", {
         templateUrl : "views/users/edit_user.html",
@@ -18,7 +20,12 @@ sagohamnenApp.config(function($routeProvider) {
     })
     .when("/campaign/:campaignId", {
         templateUrl : "views/campaigns/campaign.html",
-        controller  : 'CampaignController'
+        controller  : 'SingleCampaignCtrl',
+        resolve: {
+            campaignData: function(CampaignFactory,$route){
+                return CampaignFactory.get({campaign_id : $route.current.params.campaignId}).$promise;
+            }
+        }
     })
     .when("/campaign/:campaignId/edit", {
         templateUrl : "views/campaigns/edit_campaign.html",
@@ -26,11 +33,16 @@ sagohamnenApp.config(function($routeProvider) {
     })
     .when("/campaign_apply/:campaignId", {
         templateUrl : "views/campaigns/campaign_apply.html",
-        controller  : 'CampaignController'
+        controller  : 'ApplyCampaignCtrl'
     })
-    .when("/campaign_participants/:campaignId", {
-        templateUrl : "views/campaigns/campaign_participants.html",
-        controller  : 'CampaignController'
+    .when("/campaign_applications/:campaignId", {
+        templateUrl : "views/campaigns/camp_applications.html",
+        controller  : 'CampApplicationCtrl',
+        resolve: {
+            campaignData: function(CampaignFactory,$route){
+                return CampaignFactory.applyingPlayingCharacters({id : $route.current.params.campaignId}).$promise;
+            }
+        }
     })
     .when("/campaign/new", {
         templateUrl : "views/campaigns/new_campaign.html",
@@ -65,9 +77,40 @@ sagohamnenApp.config(function($routeProvider) {
     });
 });
 
+sagohamnenApp.config(['$httpProvider', function ($httpProvider) {
+    $httpProvider.interceptors.push(['$q', '$location', function ($q, $location) {
+        return {
+            'responseError': function(response) {
+                if(response.status === 401 || response.status === 403) {
+                    $location.path('/error/403'); // Replace with whatever should happen
+                }
+                 if(response.status === 500) {
+                    $location.path('/error/500');
+                 }
+                return $q.reject(response);
+            }
+        };
+    }]);
+}]);
+
+
 sagohamnenApp.filter("show_linebreaks", function($filter) {
  return function(data) {
    if (!data) return data;
    return data.replace(/\n\r?/g, '<br />');
  };
 });
+
+sagohamnenApp.constant('config', {
+    charStatusNone                  :0,
+    charStatusApplying              :1,
+    charStatusPlaying               :2,
+    charStatusSlp                   :3,
+    charStatusDeleted               :4,
+    campaginUserStatusNone          :0,
+    campaignUserStatusApplying      :1,
+    campaignUserStatusPlaying       :2,
+    campaignUserStatusGamemaster    :3,
+    campaignUserStatusBlocked       :4,
+});
+

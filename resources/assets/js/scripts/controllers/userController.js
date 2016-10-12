@@ -1,13 +1,14 @@
 angular.module('ShApp')
 
 // inject the Comment service into our controller
-.controller('UserController', function($scope, $http, DbService, $routeParams, $sce, $location ) {
+.controller('UserController', function($scope, $http, DbService, $routeParams, $sce, $location, $rootScope ) {
 
 	$scope.userData = [];
 	$scope.userFound = false;
 
 	$scope.getSingleUser = function()
 	{
+
 		var theId = $routeParams.userId;
         if( theId == null) {
             console.log("The user ID is missing.");
@@ -15,6 +16,7 @@ angular.module('ShApp')
         }
 
         DbService.getUser(theId).then(function successCallback(response) {
+            $rootScope.pagePath = response.data.name;
 			console.log(response);
             $scope.form = response.data;
             /*$scope.form.campaigns = response.data.campaigns;*/

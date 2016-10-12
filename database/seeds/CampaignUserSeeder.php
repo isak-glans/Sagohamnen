@@ -17,7 +17,7 @@ class CampaignUserSeeder extends Seeder
             'campaign_id'               =>  1,
             'created_at'                =>  new DateTime('01/10/2016'),
             'updated_at'                =>  new DateTime('01/10/2016'),
-            'status'                    =>  2
+            'status'                    =>  config('sh.campaign_user_status_gamemaster')
         ]);
 
     	// User 2
@@ -26,7 +26,7 @@ class CampaignUserSeeder extends Seeder
             'campaign_id'               =>  2,
             'created_at'                =>  new DateTime('01/10/2016'),
             'updated_at'                =>  new DateTime('01/10/2016'),
-            'status'                    =>  2
+            'status'                    =>  config('sh.campaign_user_status_gamemaster')
         ]);
 
         DB::table('campaign_user')->insert([
@@ -34,7 +34,7 @@ class CampaignUserSeeder extends Seeder
             'campaign_id'               =>  1,
             'created_at'                =>  new DateTime('01/10/2016'),
             'updated_at'                =>  new DateTime('01/10/2016'),
-            'status'                    =>  0
+            'status'                    =>  config('sh.campaign_user_status_none')
         ]);
     }
 }

@@ -23,6 +23,7 @@ class TableCharacters extends Migration
                 $table->text('description', 4500);
                 $table->integer('portrait_id')->unsigned()->nullable();
                 $table->text('secret_data', 4500)->nullable();
+                $table->text('excerpt', 100)->nullable();
             });
         endif;
     }

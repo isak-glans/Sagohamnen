@@ -1,7 +1,9 @@
 angular.module('ShApp')
 
 // inject the Comment service into our controller
-.controller('ApplyCampaignCtrl', function($scope, $location, $routeParams, CampaignService, Campaign, CampaignUser ) {
+.controller('ApplyCampaignCtrl', function($scope, $location, $routeParams, CampaignService, CampaignFactory, CampaignUser ) {
+
+    console.log("inne i kampapply");
 
 	$scope.form;
     $scope.campaign = { id : 0, name : ""};
@@ -12,7 +14,7 @@ angular.module('ShApp')
         var campaignId = $routeParams.campaignId;
         $scope.currentPortrait.id = $scope.defaultPortrait.id;
         $scope.currentPortrait.url = $scope.defaultPortrait.url;
-        Campaign.identify({ id: campaignId }, function(data) {
+        CampaignFactory.identify({ id: campaignId }, function(data) {
 			$scope.campaign.id = data.id;
             $scope.campaign.name = data.name;
 		}, function(error) {

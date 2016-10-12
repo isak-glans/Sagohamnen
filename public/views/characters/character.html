@@ -4,7 +4,7 @@
 	</nav>
 
 	<h1>{{form.name}}</h1>
-	<div class="container-fluid">
+	<div class="container-fluid" ng-class="{'archived' : form.archived}">
 		<div class="row">
 			<div class="col-sm-3">
 				Spelare: <a ng-href="/#/user/{{form.user.id}}">{{form.user.name}}</a>
@@ -13,7 +13,7 @@
 				Äventyr: <a ng-href="/#/campaign/{{form.campaign.id}}">{{form.campaign.name}}</a>
 			</div>
 			<div class="col-sm-3">
-				Status: {{form.status}}
+				Status: {{form.relation}}
 			</div>
 		</div>
 		<div class="row">
@@ -38,7 +38,7 @@
 			<p ng-bind-html="form.secret_data | show_linebreaks" ></p>
 		</div>
 
-		<div ng-show="form.can_edit">
+		<div ng-show="form.can_edit && form.archived == false">
 			<a ng-href="/#/edit_character/{{form.id}}"><button class="btn-info" ng-click="">Redigera</button></a>
 		</div>
 	</div>

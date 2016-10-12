@@ -2,3 +2,8 @@
 	margin-top: 20px;
 	margin-bottom: 20px;
 }
+#character_single .archived {
+    -webkit-filter: opacity(80%);
+    filter: opacity(80%);
+    background-color: #dfd8d8;
+}

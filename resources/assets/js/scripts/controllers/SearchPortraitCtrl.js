@@ -15,10 +15,8 @@ angular.module('ShApp')
     }
 
 	$scope.searchPortrait = function(searchTag, pageNr) {
-        console.log("inne");
         $scope.currentSearchPage = pageNr;
 		MediaService.searchPortrait(searchTag, pageNr).then(function successCallback(response) {
-            console.log(response);
             var images_per_page = response.images_per_page;
             $scope.portraits = response.result;
             $scope.portraits_counted = response.nr_results;
@@ -33,7 +31,6 @@ angular.module('ShApp')
     {
         // If parent scope have currentPortrait attribute.
         if ( !angular.isUndefined($scope.currentPortrait) ) {
-            console.log("Inne");
         	$scope.currentPortrait.id = portrait.id;
             $scope.currentPortrait.url = portrait.medium;
         }

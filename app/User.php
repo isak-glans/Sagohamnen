@@ -48,7 +48,12 @@ class User extends Authenticatable
 
     public function campaigns()
     {
-        return $this->belongsToMany('Sagohamnen\Campaign\Campaign')->withPivot('status', 'last_read_chat_id', 'created_at', 'updated_at')->select('id', 'name');
+        return $this->belongsToMany('Sagohamnen\Campaign\Campaign')->withPivot('status', 'last_read_chat_id', 'created_at', 'updated_at')->wherePivotIn('status', [
+                config('sh.campaign_user_status_applying'),
+                config('sh.campaign_user_status_playing'),
+                config('sh.campaign_user_status_gamemaster') ])->select('id', 'name');
     }
+
+
 
 }

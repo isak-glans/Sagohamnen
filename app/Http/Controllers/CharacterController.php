@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use App\Http\Requests;
 use Sagohamnen\Character\Character_BL;
 use Sagohamnen\Character\Character;
+use Auth;
 
 class CharacterController extends ApiController
 {
@@ -18,10 +19,12 @@ class CharacterController extends ApiController
 
 	public function index()
 	{
+        // Show all players,appliers and SLP in a campaign
 		return $this->respond(array('result'=>"inne i index") );
 	}
     public function show($id)
     {
+
     	$id_value = ctype_digit($id) ? intval($id) : null;
     	if($id_value === null) return $this->respondMissingInput();
 
@@ -67,4 +70,33 @@ class CharacterController extends ApiController
     {
     	echo "index";
     }
+
+    public function leave_campaign($id)
+    {
+        /*$laravel = app();
+        echo $version = $laravel::VERSION;*/
+        try {
+            $result = $this->Char_BL->leave_campaign($id);
+            //if($result == "cookies") return $this->respond(array("result" => "cookies ". Auth::id() ));
+            if($result === false) return $this->respondNotAuthorized();
+        }catch(Exception $e)
+        {
+            return $this->respondInternalError();
+        }
+        return $this->respond(array("success" => true));
+    }
+
+    public function set_status($id, $status)
+    {
+        try {
+            $result = $this->Char_BL->change_status($id, $status);
+            if ($result === false) return $this->respondNotAuthorized();
+            return $this->respond($result);
+        }catch(Exception $e)
+        {
+            return $this->respondInternalError($e->message() );
+        }
+        return $this->respond(array("result"=>"Funkar", 'id'=>$id, 'status' => $status));
+    }
+
 }

@@ -1,7 +1,7 @@
 angular.module('ShApp')
 
 // inject the Comment service into our controller
-.controller('CampaignController', function($scope, $http, DbService, $routeParams, $sce, $location, CampaignService, $route, MediaService, $timeout ) {
+.controller('CampaignController', function($scope, $http, DbService, $routeParams, $sce, $location, CampaignService, $route, MediaService, $timeout, NavigationService ) {
 
     $scope.campaignData = [];
     $scope.user = {};
@@ -10,23 +10,26 @@ angular.module('ShApp')
     $scope.can_apply = false;
     $scope.nrPages = 0;
 
+    NavigationService.set([]);
+
     $scope.campaign = function() {
-        var campaignId = $routeParams.campaignId;
+        /*var campaignId = $routeParams.campaignId;
         if( campaignId == null) $location.path("error/404");
 
         DbService.getCampaign(campaignId).then(function successCallback(response) {
+            console.log("resultat:", response);
             $scope.form = CampaignService.campaign(response.data,$scope.myId);
         }, function errorCallback(response) {
             if(response.status == 404) {
                 $location.path("error/404");
             }
-        });
+        });*/
     }
 
     $scope.getCampaigns = function() {
         DbService.getCampaigns().then(function successCallback(response) {
-            $scope.campaignData = response.data.campaigns;
-            $scope.allowed_make_new = Boolean(response.data.allowed_make_new);
+            $scope.campaigns = response.data.campaigns;
+            $scope.can_create = Boolean(response.data.can_create);
         }, function errorCallback(response) {
             if(response.status == 404) {
                 $location.path("error/404");
@@ -72,6 +75,12 @@ angular.module('ShApp')
 
     $scope.newCampaing = function() {
         console.log("New campaign");
+    }
+
+    $scope.approveCharacterApply = function(applyer)
+    {
+        console.log("Inne");
+        applyer.status = 2;
     }
 
 

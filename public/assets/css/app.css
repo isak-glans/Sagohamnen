@@ -8917,6 +8917,33 @@ h1:first-letter, h2:first-letter {
   margin-top: 20px;
   margin-bottom: 20px; }
 
+#character_single .archived {
+  -webkit-filter: opacity(80%);
+  filter: opacity(80%);
+  background-color: #dfd8d8; }
+
+/*
+	==============================================
+		Campaign Applications
+   	==============================================
+*/
+#campagin_applicants div.row {
+  padding: 10px;
+  background-color: rgba(210, 201, 201, 0.44);
+  border: 1px solid #fffcfc;
+  border-radius: 10px;
+  margin: 10px;
+  animation: fade 1s linear; }
+
+@keyframes fade {
+  0% {
+    opacity: 0;
+    background-color: green; }
+  100% {
+    opacity: 1; } }
+
+/*opacity: 1;
+    transition: opacity 2s linear;*/
 /* Import specific pages */
 #character_portrait {
   background-size: contain;
