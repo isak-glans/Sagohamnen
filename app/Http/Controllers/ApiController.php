@@ -3,13 +3,38 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-
+use Auth;
+use Session;
 use App\Http\Requests;
 
 
 class ApiController extends Controller
 {
     protected $statusCode = 200;
+
+
+    // Session::put('key', 'value');
+    function __construct()
+    {
+        $this->update_last_activity();
+    }
+
+    private function update_last_activity()
+    {
+        $user = Auth::user();
+        if ($user) {
+            $last_activity = Session::get('last_activity');
+            if ($last_activity !== null ){
+                $now = Carbon::now();
+                $minute_ago = $now - 60;
+                if ( $last_activity <= $minute_ago ) {
+                    $user->updated_at = $now;
+                    $user->save();
+                    Session::put('last_activity', $now);
+                }
+            }
+        }
+    }
 
     /* ===============================
           PROPERTIES

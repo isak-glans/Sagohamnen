@@ -1,7 +1,7 @@
 <?php
 namespace Sagohamnen\Chronicle;
 
-use Sagohamnen\Chronicle\chronicle;
+use Sagohamnen\Chronicle\Chronicle;
 use Sagohamnen\Campaign\Campaign;
 use App\User;
 

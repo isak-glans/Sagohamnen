@@ -43,7 +43,19 @@
 		</div>
 
 		<div class="form-group">
-			<label for="secret_data">Hemlig information</label>
+			<label for="excerpt">Sammanfattning</label>
+			<textarea
+				name="excerpt"
+				id="excerpt"
+				ng-model="form.excerpt"
+				class="form-control"
+				ng-maxlength="250"
+				rows="3"/></textarea>
+		</div>
+		<p ng-show="formEdit.excerpt.$error.maxlength" class="help-block">Den hemliga informationen är för lång.</p>
+
+		<div class="form-group">
+			<label for="secret_data">Utrustning</label>
 			<textarea
 				name="secret_data"
 				id="secret_data"
@@ -54,18 +66,17 @@
 		</div>
 		<p ng-show="formEdit.secret_data.$error.maxlength" class="help-block">Den hemliga informationen är för lång.</p>
 
-		<div class="form-group">
-			<button type="button" class="btn btn-danger" ng-click="leaveCampaign()">Ta bort</button>
-			<button type="button" class="btn btn-default pull-right" ng-click="cancelEdit()">Ångra</button>
-			<input
+		<div class="form-group" style="min-height: 50px;">
+			<button type="button" ng-click="remove()" class="btn btn-warning"><span class="glyphicon glyphicon-remove-circle"></span> Ta bort</button>
+			<button type="button" class="btn btn-default pull-right" ng-click="cancelEdit()"><span class="glyphicon glyphicon-remove"></span> Ångra</button>
+			<button
 				type		="submit"
-				class		="btn btn-primary pull-right"
+				class		="btn btn-primary edit pull-right"
 				ng-disabled	="formEdit.$invalid"
-				value		="Spara">
-			</input>
+			><span class="glyphicon glyphicon-pencil"></span> Spara</button>
 		</div>
 	</form>
 
-	<portrait-pagination></portrait-pagination>
+	<pick-portrait-dir portrait="portrait"></pick-portrait-dir>
 
 </div>

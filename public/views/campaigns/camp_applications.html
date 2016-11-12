@@ -1,20 +1,18 @@
 <div ng-init="setupApplications()" id="campagin_applicants">
 
-	<H1>{{form.name}}</H1>
+	<H1>Spelkaraktärer i {{data.name}}</H1>
 
 	<label>Spelare {{data.players.length}}/{{data.maxNrPlayers}}</label>
 	<div id="players">
 		<div ng-repeat="player in data.players" class="row">
 			<div class="col-sm-2">
-				<a ng-href="#/character/{{player.id}}"><div style="background-image:url('{{player.portrait.thumbnail}}');" class="portrait_thumbnail"></div></a>
+				<a ng-href="#/character/{{player.id}}"><div ng-style="{'background-image':'url({{player.portrait.thumbnail}})'}"
+				class="portrait_thumbnail"></div></a>
 				<span class="player_name">{{player.name}}</span>
 			</div>
-			<div class="col-sm-8">Beskrivning bla bal bal bla.</div>
+			<div class="col-sm-8">{{applicant.excerpt}}</div>
 			<div class="col-sm-2">
-				<button type="button"  class="btn btn-default" aria-label="Left Align">
-				  <span class="glyphicon glyphicon-ok" aria-hidden="true"></span>
-				</button>
-				<button type="button" ng-click="remove_player(player)" class="btn btn-default" aria-label="Left Align">
+				<button type="button" ng-click="removePlayer(player)" title="Lämna kampanj" class="btn btn-default" aria-label="Left Align">
 				  <span class="glyphicon glyphicon-remove" aria-hidden="true"></span>
 				</button>
 			</div>
@@ -25,24 +23,20 @@
 	<div>
 		<div ng-repeat="applicant in data.applicants" class="row">
 			<div class="col-sm-2">
-				<a ng-href="#/character/{{applicant.id}}"><div style="background-image:url('{{applicant.portrait.thumbnail}}');" class="portrait_thumbnail"></div></a>
+				<a ng-href="#/character/{{applicant.id}}"><div ng-style="{'background-image':'url({{applicant.portrait.thumbnail}})'}" class="portrait_thumbnail"></div></a>
 				<span class="applyer_name">{{applicant.name}}</span>
 			</div>
-			<div class="col-sm-7">Beskrivning bla bal bal bla.</div>
+			<div class="col-sm-7">{{applicant.excerpt}}</div>
 			<div class="col-sm-3">
-				<button type="button" ng-click="approve_applicant(applicant)" class="btn btn-default" title="Godkänn" aria-label="Right Align">
+				<button type="button" ng-click="approveApplicant(applicant)" class="btn btn-default" title="Godkänn" aria-label="Right Align">
 				  <span class="glyphicon glyphicon-ok" aria-hidden="true"></span>
 				</button>
-				<button type="button" class="btn btn-default" title="Ta bort" aria-label="Right Align">
+				<button type="button" class="btn btn-default" ng-click="removeApplicant($event, applicant)" title="Ta bort" aria-label="Right Align">
 				  <span class="glyphicon glyphicon-remove" aria-hidden="true"></span>
-				</button>
-				<button type="button" class="btn btn-default" title="Blockera" aria-label="Right Align">
-				  <span class="glyphicon glyphicon-flag" aria-hidden="true"></span>
 				</button>
 			</div>
 		</div>
 	</div>
-
 </div>
 
 

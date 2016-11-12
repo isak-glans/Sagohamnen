@@ -24,37 +24,40 @@ class CharacterController extends ApiController
 	}
     public function show($id)
     {
-
     	$id_value = ctype_digit($id) ? intval($id) : null;
     	if($id_value === null) return $this->respondMissingInput();
 
-    	$result = $this->Char_BL->show($id_value);
+    	$result = $this->Char_BL->single_character($id_value);
         if ($result === "not_found") return $this->respondNotFound();
     	if ($result === false) return $this->respondInternalError();
     	return $this->respond($result );
     }
 
+    // Create new
     public function store(Request $request)
     {
+        //return $this->respond(true);
         $this->validate($request, [
-            'id' => 'required|integer',
-            'name' => 'required|min:4|max:1000',
-            'description' => 'string|required|min:4|max:4500',
-            'secret_data' => 'string|max:4500',
-            'portrait_id'   => 'integer|required'
-        ]);
+            'campaign_id'   => 'required|integer',
+            'name'          => 'required|min:3|max:1000',
+            'description'   => 'string|required|min:3|max:4500',
+            'secret_data'   => 'string|max:4500',
+            'excerpt'       => 'string|required|min:3|max:250',
+            'portrait_id'   => 'integer|required']);
+
         $character = array(
-            'id'            => $request->input('id'),
+            'campaign_id'   => $request->input('campaign_id'),
             'name'          => $request->input('name'),
             'description'   => $request->input('description'),
             'secret_data'   => $request->input('secret_data'),
+            'excerpt'       => $request->input('excerpt'),
             'portrait_id'   => $request->input('portrait_id'));
 
         try {
             $result = $this->Char_BL->store_character($character);
             if ($result === false)
                 return $this->respondNotAuthorized();
-            return $this->respond(array("result"=>"Det fnuka"));
+            return $this->respond(true);
         }catch(Exception $e)
         {
             return $this->respondInternalError();
@@ -63,27 +66,36 @@ class CharacterController extends ApiController
 
     public function update(Request $request, $id)
     {
+        $this->validate($request, [
+            'id'            => 'required|integer',
+            'name'          => 'required|min:4|max:1000',
+            'description'   => 'string|required|min:4|max:4500',
+            'secret_data'   => 'string|max:4500',
+            'excerpt'       => 'string|max:250',
+            'portrait_id'   => 'integer|required'
+        ]);
+        $character = array(
+            'id'            => $request->input('id'),
+            'name'          => $request->input('name'),
+            'description'   => $request->input('description'),
+            'secret_data'   => $request->input('secret_data'),
+            'excerpt'       => $request->input('excerpt'),
+            'portrait_id'   => $request->input('portrait_id'));
 
+        try {
+            $result = $this->Char_BL->update_character($character);
+            if ($result === false)
+                return $this->respondNotAuthorized();
+            return $this->respond(true);
+        }catch(Exception $e)
+        {
+            return $this->respondInternalError();
+        }
     }
 
     public function destroy($id)
     {
     	echo "index";
-    }
-
-    public function leave_campaign($id)
-    {
-        /*$laravel = app();
-        echo $version = $laravel::VERSION;*/
-        try {
-            $result = $this->Char_BL->leave_campaign($id);
-            //if($result == "cookies") return $this->respond(array("result" => "cookies ". Auth::id() ));
-            if($result === false) return $this->respondNotAuthorized();
-        }catch(Exception $e)
-        {
-            return $this->respondInternalError();
-        }
-        return $this->respond(array("success" => true));
     }
 
     public function set_status($id, $status)

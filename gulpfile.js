@@ -23,6 +23,7 @@ elixir(function(mix) {
 
     // It looks in folder resources/assets/sass
     mix.sass([
+        '../../../bower_components/angular-material/angular-material.scss',
         '**/*.scss',
         //'../../../bower_components/bootstrap/dist/css/bootstrap.min.css',
         '../../../bower_components/bootstrap-sass/assets/stylesheets/_bootstrap.scss',
@@ -34,12 +35,17 @@ elixir(function(mix) {
 
     // Looks in folder: resources/assets/js/
     mix.scripts([
-    	'../../../bower_components/angular/angular.min.js',
-        '../../../bower_components/angular-resource/angular-resource.min.js',
-    	'../../../bower_components/angular-route/angular-route.min.js',
-        '../../../bower_components/angular-sanitize/angular-sanitize.min.js',
-        '../../../bower_components/jquery/dist/jquery.min.js',
-        '../../../bower_components/bootstrap-sass/assets/javascripts/bootstrap.min.js',
+    	'../../../bower_components/angular/angular.js',
+        '../../../bower_components/angular-resource/angular-resource.js',
+    	'../../../bower_components/angular-route/angular-route.js',
+        '../../../bower_components/angular-sanitize/angular-sanitize.js',
+        '../../../bower_components/jquery/dist/jquery.js',
+        '../../../bower_components/bootstrap-sass/assets/javascripts/bootstrap.js',
+        '../../../bower_components/angular-aria/angular-aria.js',
+        '../../../bower_components/angular-animate/angular-animate.js',
+        '../../../bower_components/angular-material/angular-material.js',
+        //'../../../bower_components/angular-bootstrap/ui-bootstrap-tpls.min.js',
+        // '../../../bower_components/angular-bootstrap/ui-bootstrap.min.js',
 
         //'../../../bower_components/bootstrap/dist/js/bootstrap.min.js',
         //'../../../bower_components/bootstrap-sass/assets/javascripts/bootstrap.min.js',

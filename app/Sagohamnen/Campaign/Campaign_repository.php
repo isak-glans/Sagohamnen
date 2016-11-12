@@ -35,45 +35,31 @@ class Campaign_repository
 		$this->db_table_to_object = new campaign_transform;
 	}
 
+	public function campaign($campaign_id)
+	{
+		return Campaign::select('id', 'user_id', 'genre', 'name', 'description', 'max_nr_players', 'rating', 'created_at', 'updated_at', 'status')->where('id', $campaign_id)->with('characters.portrait', 'gamemaster')->withCount('players')->first();
+	}
+
 	public function campaigns($page_nr)
 	{
 		$skip = ($page_nr - 1) * 10;
         $take = 10;
-        //$campaigns = Campaign::select('id', 'name', 'max_nr_players', 'rating', 'genre')->with('gamemaster', 'players')->where('status', config('sh.campaign_status_active') )->skip($skip)->take($take)->orderBy('updated_at', 'DESC')->get();
 
-        $campaigns = Campaign::select('id', 'name', 'max_nr_players', 'rating', 'genre')->withCount('players')->where('status', config('sh.campaign_status_active') )->with('gamemaster')->skip($skip)->take($take)->orderBy('updated_at', 'DESC')->get();
-
-        /*$posts = Post::withCount(['votes', 'comments' => function ($query) {
-		    $query->where('content', 'like', 'foo%');
-		}])->get();*/
-
-        //$campaigns = Campaign::select('id', 'name', 'max_nr_players', 'rating', 'genre')->with('gamemaster', 'players')->where('status', config('sh.campaign_status_active') )->skip($skip)->take($take)->orderBy('updated_at', 'DESC')->get();
+        $campaigns = Campaign::select('id', 'user_id', 'name', 'max_nr_players', 'rating', 'genre')->where('status', config('sh.campaign_status_active') )->withCount('players')->skip($skip)->take($take)->orderBy('updated_at', 'DESC')->get();
 
 		return $campaigns;
 		//return $this->db_table_to_object->campaigns($campaigns);
 	}
 
-	public function campaign($campaign_id)
+	public function setup_edit_campagin($campaign_id)
 	{
-		//return Character::select('id', 'name', 'portrait_id')->with('thumb_portrait')->where('id', 1)->first();
-
-		return Campaign::select('id', 'genre', 'name', 'description', 'max_nr_players', 'rating', 'created_at', 'updated_at')->where('id', $campaign_id)->with('characters.portrait', 'gamemaster')->first();
-
-		//return Campaign::select('id', 'genre', 'name', 'description', 'max_nr_players', 'rating', 'created_at', 'updated_at')->with('characters')->where('id', $campaign_id)->first();
-
-		//return Campaign::select('id', 'genre', 'name', 'description', 'max_nr_players', 'rating', 'created_at', 'updated_at', 'media_id')->with('users_not_audience', 'media')->where('id', $campaign_id)->first();
-
-		//return $campaign = Campaign::with('media', 'gamemaster', 'players')->where('id', $campaign_id)->first();
+		return Campaign::select('*')->where('id', $campaign_id)->where('status', config('sh.campaign_status_active'))->first();
 	}
 
-	public function count_campagins_as_gamemaster($user_id)
+	public function count_campaigns_i_am_gamemaster($user_id)
 	{
-		return Campaign_user::where(['user_id' => $user_id, 'status' => config('sh.campaign_user_status_gamemaster')])->count();
-	}
-
-	public function count_campaigns_i_am_playing($user_id)
-	{
-		return Campaign_user::where(['user_id' => $user_id, 'status' => $this->status_player])->count();
+		//campaign_status_active
+		return Campaign::where(['user_id' => $user_id, 'status' => config('sh.campaign_status_active')])->count();
 	}
 
 	public function count_nr_players($campaign_id)
@@ -88,8 +74,10 @@ class Campaign_repository
 
 	public function campaign_user_info($campaign_id, $user_id)
 	{
-		return Campaign_user::select('*')->where(['campaign_id' => $campaign_id, 'user_id' => $user_id])->first();
+		return Campaign::select('id')->where(['campaign_id' => $campaign_id, 'user_id' => $user_id])->wherePivot('user_id', $user_id)->first();
 	}
+
+
 
 	public function campaign_user_status($campaign_id, $user_id)
 	{
@@ -98,6 +86,11 @@ class Campaign_repository
 		// relation to the campaign in the campaign_user table.
 		return Campaign_user::select('status')->where(['campaign_id' => $campaign_id, 'user_id' => $user_id])->first()['status'];
 	}
+	public function find_campaign($campaign_id)
+	{
+		return $campaign = Campaign::find($campaign_id);
+	}
+
 	public function identify_campaign($campaign_id)
 	{
 		return Campaign::where('id', $campaign_id)->select('name', 'id')->first();

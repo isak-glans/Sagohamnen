@@ -6,9 +6,17 @@ use Illuminate\Http\Request;
 use App\Http\Requests;
 use Sagohamnen\Portrait\Portrait;
 use Sagohamnen\Tag\Tag;
+use Sagohamnen\Portrait\Portrait_BL;
 
 class PortraitController extends ApiController
 {
+    protected $portrait_BL;
+
+    public function __construct()
+    {
+        $this->portrait_BL = new Portrait_BL();
+    }
+
     public function index(Request $request)
     {
     	$nr_results = 0;
@@ -68,6 +76,35 @@ class PortraitController extends ApiController
     			$query->where('word', "=", 'man');
     		}])->where('type', 1)->get();*/
     	return $this->respond($result);
+    }
+
+    public function portraits()
+    {
+        // Return all portraits with tags as a json file.
+        try {
+            $data = $this->portrait_BL->portraits_with_tags();
+
+            // Transform result to thin.
+            $result = new \StdClass;
+            $portraits =  array();
+            foreach($data as $row) {
+                $obj            = new \StdClass;
+                $obj->medium    = $row->medium;
+                $obj->thumbnail = $row->thumbnail;
+                $obj->tags      = array();
+                foreach($row->tags as $tag){
+                    array_push($obj->tags, $tag->word);
+                }
+                array_push($portraits, $obj);
+            }
+            $result->portraits = $portraits;
+
+            return $this->respond($result);
+        } catch (Exception $e)
+        {
+            return $this->respondInternalError($e);
+        }
+
     }
 
 }

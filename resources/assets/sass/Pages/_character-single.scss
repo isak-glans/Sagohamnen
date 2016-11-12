@@ -1,0 +1,20 @@
+#character_single .info {
+	border: 1px solid #d2c7c7;
+    border-radius: 10px;
+    margin: 10px 0;
+    padding: 10px;
+    color: #583d3d;
+    font-size: 12px;
+}
+#character_single .excerpt {
+	font-style: italic;
+}
+#character_single .description_container {
+	margin-top: 20px;
+	margin-bottom: 20px;
+}
+/*#character_single.archived {
+    -webkit-filter: opacity(80%);
+    filter: opacity(80%);
+    background-color: #dfd8d8;
+}*/

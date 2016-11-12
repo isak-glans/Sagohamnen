@@ -2,8 +2,8 @@
 namespace Sagohamnen\Chronicle;
 
 use Illuminate\Database\Eloquent\Model;
-use Sagohamnen\Chronicle\chronicle_repository;
-use Sagohamnen\Campaign\campaign_repository;
+use Sagohamnen\Chronicle\Chronicle_repository;
+use Sagohamnen\Campaign\Campaign_repository;
 use Sagohamnen\Chat\Chat_repository;
 
 class Chronicle_BL {

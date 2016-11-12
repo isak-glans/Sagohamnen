@@ -1,25 +1,49 @@
-var sagohamnenApp = angular.module('ShApp', ["ngRoute", "ngSanitize", "ngResource"]);
+var sagohamnenApp = angular.module('ShApp', ["ngRoute", "ngSanitize", "ngResource",  "ngMaterial" ]);
 
 sagohamnenApp.config(function($routeProvider) {
     $routeProvider
     .when("/", {
         templateUrl : "views/campaigns/all_campaigns.html",
-        controller : "CampaignController"
+        controller : "CampaignsCtrl",
+        resolve: {
+            campaignsData: function(CampaignFactory,$route){
+                return CampaignFactory.campaigns().$promise;
+            }
+        }
     })
     .when("/home", {
         templateUrl : "views/campaigns/all_campaigns.html",
-        controller : "CampaignController"
+        controller : "CampaignsCtrl",
+        resolve: {
+            campaignsData: function(CampaignFactory,$route){
+                return CampaignFactory.campaigns().$promise;
+            }
+        }
     })
-    .when("/user/edit/:userId", {
+    .when("/edit_user/:userId", {
         templateUrl : "views/users/edit_user.html",
-        controller  : "UserController"
+        controller  : "EditUserCtrl",
+        resolve: {
+            setupEditUserData: function(UserFactory,$route){
+                return UserFactory.setupEditUser({id : $route.current.params.userId}).$promise;
+            }
+        }
     })
     .when("/user/:userId", {
         templateUrl : "views/users/single_user.html",
-        controller  : "UserController"
+        controller  : "SingleUserCtrl",
+        resolve: {
+            userData: function(UserFactory,$route){
+                return UserFactory.get({userId : $route.current.params.userId}).$promise;
+            }
+        }
+    })
+    .when("/campaign/new", {
+        templateUrl : "views/campaigns/new_campaign.html",
+        controller  : 'newCampaignCtrl',
     })
     .when("/campaign/:campaignId", {
-        templateUrl : "views/campaigns/campaign.html",
+        templateUrl : "views/campaigns/single_campaign.html",
         controller  : 'SingleCampaignCtrl',
         resolve: {
             campaignData: function(CampaignFactory,$route){
@@ -27,13 +51,23 @@ sagohamnenApp.config(function($routeProvider) {
             }
         }
     })
-    .when("/campaign/:campaignId/edit", {
+    .when("/edit_campaign/:campaignId", {
         templateUrl : "views/campaigns/edit_campaign.html",
-        controller  : 'CampaignController'
+        controller  : 'EditCampaignCtrl',
+        resolve: {
+            editCampaignData: function(CampaignFactory,$route){
+                return CampaignFactory.editCampaign({id : $route.current.params.campaignId}).$promise;
+            }
+        }
     })
     .when("/campaign_apply/:campaignId", {
         templateUrl : "views/campaigns/campaign_apply.html",
-        controller  : 'ApplyCampaignCtrl'
+        controller  : 'ApplyCampaignCtrl',
+        resolve: {
+            identifyCampaign: function(CampaignFactory,$route){
+                return CampaignFactory.identify({id : $route.current.params.campaignId}).$promise;
+            }
+        }
     })
     .when("/campaign_applications/:campaignId", {
         templateUrl : "views/campaigns/camp_applications.html",
@@ -44,17 +78,18 @@ sagohamnenApp.config(function($routeProvider) {
             }
         }
     })
-    .when("/campaign/new", {
-        templateUrl : "views/campaigns/new_campaign.html",
-        controller  : 'CampaignController'
-    })
     .when("/campaign/:campaignId/chronicle/:pageNr", {
         templateUrl : "views/chronicles/chronicles.html",
         controller  : 'ChronicleController'
     })
     .when("/character/:characterId", {
-        templateUrl : "views/characters/character.html",
-        controller  : 'SingleCharacterCtrl'
+        templateUrl : "views/characters/single_character.html",
+        controller  : 'SingleCharacterCtrl',
+        resolve: {
+            singleCharacter: function(CharacterFactory,$route){
+                return CharacterFactory.get({id : $route.current.params.characterId}).$promise;
+            }
+        }
     })
     .when("/edit_character/:characterId", {
         templateUrl : "views/characters/edit_character.html",
@@ -78,13 +113,19 @@ sagohamnenApp.config(function($routeProvider) {
 });
 
 sagohamnenApp.config(['$httpProvider', function ($httpProvider) {
-    $httpProvider.interceptors.push(['$q', '$location', function ($q, $location) {
+    $httpProvider.interceptors.push(['$q', '$location', '$rootScope', function ($q, $location, $rootScope) {
         return {
             'responseError': function(response) {
-                if(response.status === 401 || response.status === 403) {
+                if(response.status === 401) {
                     $location.path('/error/403'); // Replace with whatever should happen
                 }
-                 if(response.status === 500) {
+                else if (response.status === 403 ){
+                    // Ask the user to login?
+                    $rootScope.signedIn = false;
+                    $rootScope.$broadcast('loginChange', { logedIn: false });
+                    $location.path('/error/403'); // Replace with whatever should happen
+                }
+                else if(response.status === 500) {
                     $location.path('/error/500');
                  }
                 return $q.reject(response);
@@ -96,21 +137,10 @@ sagohamnenApp.config(['$httpProvider', function ($httpProvider) {
 
 sagohamnenApp.filter("show_linebreaks", function($filter) {
  return function(data) {
-   if (!data) return data;
+   if (!data || data == null || typeof data !== 'string' ) return data;
    return data.replace(/\n\r?/g, '<br />');
  };
 });
 
-sagohamnenApp.constant('config', {
-    charStatusNone                  :0,
-    charStatusApplying              :1,
-    charStatusPlaying               :2,
-    charStatusSlp                   :3,
-    charStatusDeleted               :4,
-    campaginUserStatusNone          :0,
-    campaignUserStatusApplying      :1,
-    campaignUserStatusPlaying       :2,
-    campaignUserStatusGamemaster    :3,
-    campaignUserStatusBlocked       :4,
-});
+
 

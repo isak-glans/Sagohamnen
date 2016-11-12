@@ -1,0 +1,37 @@
+<div id="pick-portrait" class="panel panel-default">
+	<div class="panel-heading">
+		Porträtt
+	</div>
+
+	<div class="panel-body">
+		<div class="container-fluid">
+			<label>Kön</label>
+			<select name="gender" ng-model="gender" ng-options="x.label for x in genders" class="form-control">
+			</select>
+
+			<label>Ras</label>
+			<select ng-model="race" ng-options="x.label for x in races" class="form-control">
+			</select>
+
+			<label>Klädsel</label>
+			<select ng-model="clothes" class="form-control">
+				<option value=1>-</option>
+				<option value=1>Krigare</option>
+				<option value=1>Mystiker</option>
+				<option value=1>Kriminell</option>
+				<option value=1>Handelsman</option>
+			</select>
+
+		</div>
+
+		<div id="rp_portrait_results" class="row" >
+			<div class="row">
+				<div ng-repeat="portrait in portraits | filter:{tags: gender.label}:true | filter: {tags: race.label }:true" class="col-sm-1">
+					<div style="background-image: url('{{portrait.thumbnail}}');" alt="porträtt" class="portrait_thumbnail"></div>
+				</div>
+			</div>
+		</div>
+
+	</div>
+	</div>
+</div>

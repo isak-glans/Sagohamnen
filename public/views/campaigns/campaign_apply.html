@@ -43,6 +43,39 @@
 					</div>
 				</div>
 
+				<label for="excerpt">Sammanfattning</label>
+				<div class="row">
+					<div class="form-group col-sm-12">
+						<textarea
+							name="excerpt"
+							id="excerpt"
+							ng-model="apply.excerpt"
+							class="form-control"
+							ng-minlength = 3
+							ng-maxlength="250"
+							placeholder = "Sammanfattande beskrivning om din karaktär."
+							rows="3"
+							required/></textarea>
+						<p ng-show="formApply.excerpt.$error.minlength" class="text-danger">Sammanfattningen är för kort, eller saknas.</p>
+					</div>
+				</div>
+
+				<label for="secret_data">Utrustning</label>
+				<div class="row">
+					<div class="form-group col-sm-12">
+						<textarea
+							name="secret_data"
+							id="secret_data"
+							ng-model="apply.secret_data"
+							class="form-control"
+							ng-maxlength="4500"
+							placeholder = "Utrustning och hemlig information."
+							rows="5"
+							required/></textarea>
+						<p ng-show="formApply.secret_data.$error.minlength" class="text-danger">Sammanfattningen är för lång.</p>
+					</div>
+				</div>
+
 				<div id="campaign_apply_buttons" class="form-group">
 					<div class="col-sm-12">
 						<button class="btn btn-default pull-right" ng-click="cancel()">Ångra</button>

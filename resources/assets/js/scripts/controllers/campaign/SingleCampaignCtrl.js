@@ -1,51 +1,26 @@
 angular.module('ShApp')
 
 // inject the Comment service into our controller
-.controller('SingleCampaignCtrl', function($scope, $http, DbService, $routeParams, $sce, $location, $route, MediaService, $timeout, CampaignFactory, CampaignService, config, NavigationService, campaignData) {
+.controller('SingleCampaignCtrl', function($scope, $http, DbService, $routeParams, $sce, $location, $route, $timeout, CampaignFactory, CampaignService, config, NavigationService, campaignData) {
+
+    $scope.showAlternatives = false;
 
 	$scope.setupCampaign = function() {
-        console.log("Innen i single camp ctrl");
+        //console.log("Innen i single camp ctrl");
         var campaignId = $routeParams.campaignId;
         if( campaignId == null) $location.path("error/404");
 
         response = campaignData;
-        //console.log(campaignData);
         var characters = response.player_characters;
         response.created_at = new Date( response.created_at );
         response.updated_at = new Date( response.updated_at );
 
-        //console.log(campaignData.id, campaignData.name, campaignData);
-        NavigationService.set([{"url" : "/#/campaign/"+campaignData.id, 'title': campaignData.name, 'active' : false}]);
-        //[{"url" : "/#/campaign/"+response.id, 'title': response.name, 'active' : false}, {"url" : '', 'title': 'Ansökningar', 'active' : true }]
+        response.archived = response.status == config.campaginArchived;
 
-        response.players = [];
-        response.applicants = [];
-        $.each( response.characters, function( index, value ){
-            if(value.status == config.charStatusApplying) response.applicants.push(value);
-            if(value.status == config.charStatusPlaying) response.players.push(value);
-        });
+        // Update the navigation.
+        NavigationService.set([{"url" : "/#/campaign/"+campaignData.id, 'title': campaignData.name, 'active' : true}]);
+
         $scope.form = response;
-
-        /*CampaignFactory.get({campaign_id : campaignId}, function(response){
-        	console.log(response)
-
-        	var characters = response.player_characters;
-        	response.created_at = new Date( response.created_at );
-	        response.updated_at = new Date( response.updated_at );
-
-	        var player_characters = response.player_characters;
-	        response.players = [];
-	        response.appliers = [];
-	        $.each( characters, function( index, value ){
-	            if(value.status == config.charStatusApplying) response.appliers.push(value);
-	            if(value.status == config.charStatusPlaying) response.players.push(value);
-	        });
-
-	        $scope.form = response;
-
-        }, function(response){
-        	console.log("Failure");
-        })*/
     }
 
     $scope.applyToCampaign = function() {
@@ -56,7 +31,6 @@ angular.module('ShApp')
 
     $scope.approveCharacterApply = function(applyer)
     {
-        console.log("Inne");
         moveApplyerToPlayer(applyer);
     }
 
@@ -71,5 +45,25 @@ angular.module('ShApp')
             	i--;
             }
         }
+    }
+
+    $scope.showAlt = function(){
+        $scope.showAlternatives = $scope.showAlternatives == true? false : true;
+    }
+
+    $scope.edit = function(){
+        $location.path('edit_campaign/'+ $scope.form.id );
+    }
+    $scope.handleApplicants = function(){
+        $location.path('campaign_applications/' + $scope.form.id);
+    }
+
+    $scope.activateCampaign = function(){
+        CampaignFactory.activate({ id : $scope.form.id}, function(success){
+            console.log("Ej arkiverad");
+            $scope.form.archived = false;
+        }, function (error) {
+
+        });
     }
 });

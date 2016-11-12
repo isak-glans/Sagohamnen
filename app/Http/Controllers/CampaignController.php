@@ -32,11 +32,11 @@ class campaignController extends ApiController
 
     public function campaigns_per_page($page_nr)
     {
-
         try {
             $campaigns = $this->Camp_BL->campaigns_per_page($page_nr);
             if ($campaigns == "not_found") return $this->respondNotFound();
 
+            //$can_create_new = false;
             $can_create_new = $this->Camp_BL->can_create_new();
 
             return $this->respond(array('campaigns' => $campaigns, 'can_create' => $can_create_new) );
@@ -50,9 +50,6 @@ class campaignController extends ApiController
     // Get info about a single campaign.
     public function show($campaign_id)
     {
-        /*return $this->respondNotAuthorized();
-        throw new exception();*/
-        //sleep(5);
         try
         {
             $campaign = $this->Camp_BL->single_campaign($campaign_id);
@@ -66,45 +63,56 @@ class campaignController extends ApiController
 
     }
 
+    // Return data used for edit a campaign.
+    public function edit ($id)
+    {
+        try
+        {
+            $campaign = $this->Camp_BL->setup_edit_campaign($id);
+            if ( $campaign === false ) return $this->respondNotFound();
+            return $this->respond($campaign);
+        }
+        catch(Exeption $e)
+        {
+            $this->respondWithError("Ett fel uppstod på sidan.");
+        }
+    }
+
     // Save in database.
     public function store(Request $request)
     {
-        // User signed in?
-        if ( !Auth::check() ) return $this->respondNotAuthorized();
-
-        $user_id = Auth::id();
-
         $this->validate($request, [
-            'name' => 'required|min:4|max:1000',
-            'text' => 'required|min:4|max:4500',
-            'genre' => 'required|max:255',
+            'name'          => 'required|min:4|max:255',
+            'description'   => 'required|min:4|max:4500',
+            'genre'         => 'required|max:255',
+            'max_nr_players' => 'required|numeric|digits_between:1,10'
         ]);
 
-        echo "All fine";
-        //return response()->json( array( 'name' => ) );
+        try {
+            $result = $this->Camp_BL->store_new($request);
+            if ($result === false) return $this->respondNotAuthorized("Denna handling är inte tillåten.");
+        } catch(Exceptin $e)
+        {
+            $this->respondWithError("Ett fel uppstod på sidan.");
+        }
 
     }
 
     public function update(Request $request, $id) {
-        $campaign = Campaign::find($id);
-
-        if ( ! $campaign ) :
-            return $this->respondNotFound('Kampanjen hittades inte');
-        endif;
-
         $this->validate($request, [
-            'name' => 'required|min:4|max:255',
-            'description' => 'required|min:4|max:4500',
-            'genre' => 'required|max:255',
-            'max_nr_players' => 'required|numeric|digits_between:1,10'
+                'name' => 'required|min:4|max:255',
+                'description' => 'required|min:4|max:4500',
+                'genre' => 'required|max:255',
+                'max_nr_players' => 'required|numeric|digits_between:1,10'
         ]);
 
-        $campaign->name             = $request->input('name');
-        $campaign->genre            = $request->input('genre');
-        $campaign->description      = $request->input('description');
-        $campaign->max_nr_players   = $request->input('max_nr_players');
-        $campaign->save();
-
+        try {
+            $result = $this->Camp_BL->update($request, $id);
+            if ($result === false) return $this->respondNotAuthorized("Denna handling är inte tillåten.");
+        } catch(Exceptin $e)
+        {
+            $this->respondWithError("Ett fel uppstod på sidan.");
+        }
     }
 
     public function apply_to_campaign($campaign_id)
@@ -133,13 +141,30 @@ class campaignController extends ApiController
 
     public function destroy($id)
     {
-    	echo "index";
+    	try {
+            $result = $this->Camp_BL->delete($id);
+            if ($result === false) return $this->respondNotAuthorized("Denna handling är inte tillåten.");
+        } catch (Exception $e) {
+            $this->respondInternalError();
+        }
+    }
+
+    public function activate($id)
+    {
+        // Activate an archived campaign.
+        try {
+            $result = $this->Camp_BL->activate($id);
+            if ($result === false) return $this->respondNotAuthorized("Denna handling är inte tillåten.");
+        } catch (Exception $e) {
+            $this->respondInternalError();
+        }
     }
 
     public function campaignApplication_setup($campaign_id)
     {
         //$Character_BL
         try {
+            echo "inne2";
             $result = $this->Camp_BL->campaign_applications_setup($campaign_id);
             if($result === false) return $this->respondNotAuthorized();
             return $this->respond($result);

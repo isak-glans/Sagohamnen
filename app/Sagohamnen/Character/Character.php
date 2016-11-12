@@ -27,7 +27,7 @@ class Character extends Model
 
     public function campaign()
     {
-        return $this->belongsTo('Sagohamnen\Campaign\Campaign')->select('id', 'name');
+        return $this->belongsTo('Sagohamnen\Campaign\Campaign')->select('id', 'name', 'user_id');
     }
 
     /*public function campagin_user_status()

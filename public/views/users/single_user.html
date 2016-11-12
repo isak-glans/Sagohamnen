@@ -1,53 +1,78 @@
-<div ng-controller="UserController" ng-init="getSingleUser()">
 
-<nav>
-	<a ng_href="/#/home">Hem</a> - {{form.name}}
-</nav>
+<div class="container-fluid" id="single_user">
+	<div class="row">
+		<div class="col-sm-5"><h1>{{form.name}}</h1></div>
+	</div>
 
-<h1>{{user.name}}</h1>
-
-<div class="container">
 	<div class="row">
 		<div class="col-sm-6">
-			<p>{{form.description}}</p>
+			<label for="user-description">Beskrivning</label>
+			<p id="user-description">{{form.description}}</p>
 		</div>
 		<div class="col-sm-6"><img ng-src="{{form.avatar}}" alt="Avatar" /></div>
 	</div>
-	<div class="row">
-		<div class="col-sm-3">
-			<label>Senast aktiv:</label>
-			{{form.last_activity | date: 'yyyy-MM-dd'}}
-		</div>
+
+
+
+	<div id="user-campaigns">
+		<label>Spelledare för</label>
+		<ul>
+			<li ng_repeat="campaign in form.gamemaster_campaigns">
+				<a ng-href="#/campaign/{{form.id}}" >{{campaign.name}}</a>
+			</li>
+		</ul>
 	</div>
-	<h3>Äventyr</h3>
-	<div class="row">
-		<div class="col-sm-6">
-			<label>Spelare</label>
-			<div ng-repeat="campaign in form.playing">
-				<p><a ng-href="#/campaign/{{campaign.id}}">{{ campaign.name }}</a></p>
+
+	<div id="user-characters">
+		<label>Karaktärer</label>
+		<div ng-repeat="character in player_characters" class="characters">
+			<div class="row">
+				<div class="col-sm-12">
+					<a ng-href="#/character/{{character.id}}">{{ character.name }}</a> deltar i <a ng-href="#/campaign/{{character.campaign.id}}">{{character.campaign.name}}</a>
+				</div>
+			</div>
+			<div class="row">
+				<div class="col-sm-4">
+					<a ng-href="#/character/{{character.id}}"><div style="background-image:url('{{character.portrait.thumbnail}}');" class="character_portrait"></div></a>
+				</div>
+				<div class="col-sm-8">
+					<p>{{character.excerpt}}</p>
+				</div>
 			</div>
 		</div>
-		<div class="col-sm-6">
-			<label>Spelleder</label>
-			<div ng-repeat="campaign in form.gamemastering">
-				<p><a ng-href="#/campaign/{{campaign.id}}">{{ campaign.name }}</a></p>
+		<div ng-repeat="character in applying_characters" class="characters">
+			<div class="row">
+				<div class="col-sm-12">
+					<div class="col-sm-12">
+						<a ng-href="#/character/{{character.id}}">{{ character.name }}</a>ansöker om att delta i <a ng-href="#/campaign/{{character.campaign.id}}">{{character.campaign.name}}</a>
+					</div>
+				</div>
 			</div>
-		</div>
-	</div>
-	<div class="row">
-		<div class="col-sm-6">
-			<label>Ansökt</label>
-			<div ng-repeat="campaign in form.applying">
-				<p><a ng-href="#/campaign/{{campaign.id}}">{{ campaign.name }}</a></p>
+			<div class="row">
+				<div class="col-sm-4">
+					<a ng-href="#/character/{{character.id}}"><div style="background-image:url('{{character.portrait.thumbnail}}');" class="character_portrait"></div></a>
+				</div>
+				<div class="col-sm-8">
+					<p>{{character.excerpt}}</p>
+				</div>
 			</div>
 		</div>
 	</div>
 
-
 	<div class="row">
-		<span class="col-sm-4" ng-show="form.mine"><a ng-href="#/user/edit/{{form.id}}">Redigera</a></span>
+		<div class="col-sm-12">
+			<span class="text-muted">Senast aktiv: {{form.updated_at | date: 'yyyy-MM-dd \k\l HH:mm'}}</span>
+		</div>
 	</div>
+
+	<button class="btn btn-default" ng-show="form.mine" ng-click="showAlt()" title="Alternativ"><span class="glyphicon glyphicon-cog"></span></button>
+	<span ng-show="showAlternatives">
+		<a ng-href="#/edit_user/{{form.id}}"><button class="btn btn-default"><span class="glyphicon glyphicon-pencil"></span> Redigera</button></a>
+		<span ng-click="logOut()" class="btn btn-default"><i class="fa fa-sign-out" aria-hidden="true"></i> Logga ut</span>
+	</span>
 </div>
+
+
 
 
 

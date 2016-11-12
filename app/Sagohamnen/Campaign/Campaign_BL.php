@@ -11,6 +11,9 @@ use Sagohamnen\User\User_repository;
 use Sagohamnen\Chronicle\Chronicle_BL;
 use Sagohamnen\Chat\Chat_BL;
 use Sagohamnen\Character\Character_BL;
+use Sagohamnen\Character\Character_repository;
+use Sagohamnen\Last_read\Last_read_repository;
+use App\Http\Requests;
 
 class Campaign_BL {
 
@@ -28,6 +31,7 @@ class Campaign_BL {
 	function __construct() {
 		$this->camp_rep = new Campaign_repository();
 		$this->user_rep = new User_repository();
+		$this->char_rep = new Character_repository();
 
 		$this->status_none 		= config('sh.campaign_user_status_none');
 		$this->status_applying 	= config('sh.campaign_user_status_applying');
@@ -57,13 +61,15 @@ class Campaign_BL {
 
 	public function can_create_new()
 	{
-		$result = false;
-		if (Auth::check()) :
-            $user_id = Auth::id();
-            $nr_campaigns_as_gamemaster = $this->camp_rep->count_campagins_as_gamemaster($user_id);
-            $result = $nr_campaigns_as_gamemaster <= config('sh.max_nr_campaigns_as_gamemaster');
-        endif;
-        return $result;
+		if (Auth::check() == false) return false;
+        $user_id = Auth::id();
+    	$nr_char_as_gm = $this->camp_rep->count_campaigns_i_am_gamemaster($user_id);
+        return $nr_char_as_gm <= config('sh.max_nr_campaigns_as_gamemaster');
+	}
+
+	public function setup_edit_campaign($campaign_id)
+	{
+		return $this->camp_rep->setup_edit_campagin($campaign_id);
 	}
 
 	public function single_campaign($campaign_id)
@@ -77,72 +83,100 @@ class Campaign_BL {
 		$data->can_edit = false;
 		$data->unread_chronicle = false;
 		$data->unread_chat = false;
-		$data->nr_players = 0;
-
-		// Count nr playing characters.
-		foreach ($data->characters as $character):
-			if($character->status == $this->status_player) $data->nr_players += 1;
-		endforeach;
+		$last_read_chronicle_id = 0;
+		$last_read_chat_id = 0;
 
 		$my_id = $this->user_rep->my_id();
+
+		// Decide the user relation to campaign.
+		$relation = $this->sort_and_decide_relation($data->characters, $my_id, $data->user_id);
+		$data->can_edit = $relation->i_am_gm == true;
+		unset($data->characters);
+		$data->players 		= $relation->players;
+		$data->applicants 	= $relation->applicants;
+
 		if ( $my_id === null) return $data;
-      	$campaign_relation = $this->my_campaign_user_info($campaign_id, $my_id);
 
-      	// If first visit in campaign
-      	if ($campaign_relation === null) :
-      		// User that are not part of campaign still need a row
-      		// to store data of what chronicle id he/she read.
-      		$this->camp_rep->create_relation_to_campagin($campaign_id, $my_id);
-      		// Since code can't wait for request
-      		// tell the user status in code.
-      		$campaign_user_status =  $this->status_none;
-      		$data->user_blocked = false;
-      	else :
-      		$data->can_edit = $campaign_relation->status == config('sh.campaign_user_status_gamemaster')? true : false;
-      		$campaign_user_status = $campaign_relation->status;
-      		$data->user_blocked = $campaign_user_status === $this->status_blocked;
-      		// Have unread chronicles or chat?
-      		$last_read_chronicle = $campaign_relation->last_read_chro_id;
-      		$last_read_chat = $campaign_relation->last_read_chat_id;
-      		$chronicle_BL = new Chronicle_BL();
-      		$chat_BL = new Chat_BL();
-      		$data->unread_chronicle = $chronicle_BL->have_unread_chronicle($campaign_id, $last_read_chronicle);
-      		if ($campaign_relation->status == $this->status_player || $campaign_relation->status == $this->status_gamemaster ) :
-      			$data->unread_chat = $chat_BL->have_unread_chat($campaign_id, $last_read_chat);
-  			endif;
-      	endif;
+		// Fetch repositories.
+		$chronicle_BL = new Chronicle_BL();
+  		$chat_BL = new Chat_BL();
+		$last_read_rep = new Last_read_repository();
 
-      	// Can user apply?
-      	$max_nr_players = $data->max_nr_players;
-      	$current_nr_players = count($data->player_characters);
-      	$nr_campaigns_as_player = $this->nr_campaigns_as_player($campaign_id);
-      	$data->can_apply = $this->can_i_apply($campaign_id, $campaign_user_status, $max_nr_players, $current_nr_players, $nr_campaigns_as_player);
-		return $data;
+		// Last read
+		$last_read_object = $last_read_rep->last_read_info($campaign_id, $my_id);
+
+		//var_dump($last_read_object);
+		$last_read_chronicle_id = $last_read_object['chronicle_id'];
+		$last_read_chat_id = $last_read_object['chat_id'];
+
+		// If no row, the create one.
+		if ( $last_read_object == null) :
+			$last_read_rep->create_new($campaign_id, $my_id);
+			$last_read_chronicle_id = 0;
+			$last_read_chat_id = 0;
+		endif;
+		//$data->blocked 		= $relation->blocked;
+
+		// Unread chronicles or chats.
+		if ( $relation->i_am_gm || $relation->i_am_player ) :
+  			$data->unread_chat = $chat_BL->have_unread_chat( $campaign_id, $last_read_chat_id );
+		endif;
+		$data->unread_chronicle = $chronicle_BL->have_unread_chronicle( $campaign_id, $last_read_chronicle_id );
+		unset($data->last_read);
+
+		// Count campaigns I am playing in.
+		$nr_campaigns_as_player = $this->char_rep->count_campaigns_i_am_playing($my_id);
+
+		// Can I apply to this campaign?
+		$data->can_apply = $this->can_i_apply($relation,$data->max_nr_players,$data->players_count,$nr_campaigns_as_player);
+
+      	return $data;
 	}
 
-
-	public function can_i_apply($campaign_id, $campaign_user_status, $max_nr_players, $current_nr_players, $nr_campaigns_as_player)
+	public function sort_and_decide_relation($characters, $my_id, $gm_id)
 	{
-		$my_id = $this->user_rep->my_id();
-		if ( $my_id == null ) return false;
+		// Am I applying, playing or GM:ing this campaign?
+		// https://github.com/symfony/symfony/issues/2470
+		$result = new \StdClass;
+		$result->players = $result->applicants = $result->npc = $result->blocked = array();
+		$result->i_am_player = $result->i_am_applying = $result->i_am_blocked = $result->i_am_gm = false;
+		$result->i_am_gm = $my_id == $gm_id;
+
+		if ( count($characters) > 0 ) {
+			foreach($characters as $character ) {
+		  		if ( $character->status == config('sh.character_status_playing') ){
+		  			array_push($result->players, $character);
+		  			if ($character->user_id == $my_id) $result->i_am_player = true;
+		  		}
+		  		elseif ( $character->status == config('sh.character_status_applying') ){
+		  			array_push($result->applicants, $character);
+		  			if ($character->user_id == $my_id) $result->i_am_applying = true;
+		  		}
+		  		elseif ($character->status == config('sh.character_status_blocked') ){
+		  			array_push($result->blocked, $character);
+		  			if ($character->user_id == $my_id) $result->i_am_blocked = true;
+		  		}
+		  		elseif ($character->status == config('sh.character_status_npc') ){
+		  			array_push($result->npc, $character);
+		  		}
+			}
+		}
+		return $result;
+	}
+
+	public function can_i_apply($relation_to_campaign, $max_nr_players, $current_nr_players, $nr_campaigns_as_player)
+	{
+		if ($relation_to_campaign === null || $max_nr_players === null || $current_nr_players === null || $nr_campaigns_as_player === null)
+			throw new exception("Can I apply miss parameter data in campaign_Bl->can_i_apply");
 
 		// Is there space left in campaign.
 		if ($max_nr_players <= $current_nr_players) return false;
 
-		// Am I applying, playing or GM:ing this campaign?
-		$can_apply = true;
-		if( $campaign_user_status !== null ) :
-			switch($campaign_user_status) :
-				case $this->status_applying:
-				case $this->status_player:
-				case $this->status_gamemaster:
-				case $this->status_blocked:
-					$can_apply = false;
-					break;
-			endswitch;
-			if ($can_apply == false) return false;
-		endif;
-
+		if ( $relation_to_campaign->i_am_gm ||
+			$relation_to_campaign->i_am_player ||
+			$relation_to_campaign->i_am_applying ||
+			$relation_to_campaign->i_am_blocked )
+			return false;
 
 		// Am I part of less then 2 campaigns?
 		if ($nr_campaigns_as_player >= 2) return false;
@@ -214,10 +248,75 @@ class Campaign_BL {
 		/*$this->Char_BL = new Character_BL();
 		$result = $this->Char_BL->applying_or_playing_in_campaign($campaign_id);*/
 
-		return $this->camp_rep->campaign_applications_setup($campaign_id);
+		$result = $this->camp_rep->campaign_applications_setup($campaign_id);
+		if ($result === null || empty($result)  || count($result) == 0) return false;
+		return $result;
 		// Can GM add more to campaign?
 
 		//return array('characters' => $result, 'campaign' =>$campaign);
+	}
+
+	public function store_new($request)
+	{
+		// See if user owns the campaign.
+        $my_id = $this->user_rep->my_id();
+		if($my_id === false) return false;
+
+		$campaign = new Campaign();
+        $campaign->name             = $request->input('name');
+        $campaign->genre            = $request->input('genre');
+        $campaign->description      = $request->input('description');
+        $campaign->max_nr_players   = $request->input('max_nr_players');
+        $campaign->user_id			= $my_id;
+        $campaign->status           = 1;
+        $campaign->save();
+	}
+
+	public function update($request, $id)
+	{
+		// FInd the campaign.
+		$campaign = $this->camp_rep->find_campaign($id);
+        if ( ! $campaign ) return false;
+
+        // See if user owns the campaign.
+        $my_id = $this->user_rep->my_id();
+        if ($my_id === null || $campaign->user_id != $my_id) return false;
+
+        $campaign->name             = $request->input('name');
+        $campaign->genre            = $request->input('genre');
+        $campaign->description      = $request->input('description');
+        $campaign->max_nr_players   = $request->input('max_nr_players');
+        $campaign->save();
+	}
+
+	public function delete($id)
+	{
+		// FInd the campaign.
+		$campaign = $this->camp_rep->find_campaign($id);
+        if ( ! $campaign ) return false;
+
+        // See if user owns the campaign.
+        $my_id = $this->user_rep->my_id();
+        if ($my_id === null || $campaign->user_id != $my_id) return false;
+
+        // Set status to archived.
+        $campaign->status = config('sh.campaign_status_archived');
+        $campaign->save();
+	}
+
+	public function activate($id)
+	{
+		// FInd the campaign.
+		$campaign = $this->camp_rep->find_campaign($id);
+        if ( ! $campaign ) return false;
+
+        // See if user owns the campaign.
+        $my_id = $this->user_rep->my_id();
+        if ($my_id === null || $campaign->user_id != $my_id) return false;
+
+        // Set status to archived.
+        $campaign->status =  config('sh.campaign_status_active');
+        $campaign->save();
 	}
 
 
@@ -243,5 +342,6 @@ class Campaign_BL {
 	{
 		return $this->camp_rep->prep($campaign_id, $my_id);
 	}
+
 
 }

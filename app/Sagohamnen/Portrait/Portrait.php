@@ -8,7 +8,7 @@ class Portrait extends Model
 {
     protected $fillable = [ 'url', 'description' ];
 
-    public function Tag()
+    public function Tags()
     {
     	return $this->belongsToMany('Sagohamnen\Tag\Tag');
     }

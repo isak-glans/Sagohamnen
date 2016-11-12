@@ -41,54 +41,5 @@ Fem år senare fick Terry kontakt med en grupp äventyrare, som tog med honom p�
             'updated_at'       => new DateTime('01/10/2016'),
             'status'           => 1,
         ]);
-        DB::table('characters')->insert([
-            'user_id'          => 2,
-            'campaign_id'      => 1,
-            'name'             => "Morfeus",
-            'description'      => "En mystiker.",
-            'excerpt'          => 'En till trollkarl.',
-            'secret_data'      => "Egentligen trollkarl.",
-            'portrait_id'         => 3,
-            'created_at'       => new DateTime('01/10/2016'),
-            'updated_at'       => new DateTime('01/10/2016'),
-            'status'           => 1,
-        ]);
-        DB::table('characters')->insert([
-            'user_id'          => 2,
-            'campaign_id'      => 1,
-            'name'             => "Zalabar den store",
-            'description'      => "En mystiker.",
-            'excerpt'          => 'En mystiker.',
-            'secret_data'      => "Egentligen trollkarl.",
-            'portrait_id'         => 4,
-            'created_at'       => new DateTime('01/10/2016'),
-            'updated_at'       => new DateTime('01/10/2016'),
-            'status'           => 1,
-        ]);
-        DB::table('characters')->insert([
-            'user_id'          => 2,
-            'campaign_id'      => 1,
-            'name'             => "Grimoire",
-            'description'      => "En mystiker.",
-            'excerpt'          => 'En till mystiker.',
-            'secret_data'      => "Egentligen trollkarl.",
-            'portrait_id'         => 5,
-            'created_at'       => new DateTime('01/10/2016'),
-            'updated_at'       => new DateTime('01/10/2016'),
-            'status'           => 2,
-        ]);
-        DB::table('characters')->insert([
-            'user_id'          => 2,
-            'campaign_id'      => 1,
-            'name'             => "Alexander Mjersko",
-            'description'      => "En mystiker.",
-            'excerpt'          => 'En mystiker from de kalla länderna.',
-            'secret_data'      => "Egentligen trollkarl.",
-            'portrait_id'         => 6,
-            'created_at'       => new DateTime('01/10/2016'),
-            'updated_at'       => new DateTime('01/10/2016'),
-            'status'           => 1,
-        ]);
-
     }
 }

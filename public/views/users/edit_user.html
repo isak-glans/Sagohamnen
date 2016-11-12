@@ -1,9 +1,6 @@
-<div ng-controller="UserController" ng-init="getSingleUser()">
-	<nav>
-		<a ng_href="/#/home">Hem</a> - <a ng_href="/#/user/edit{{user.id}}">Redigera {{user.name}}</a>
-	</nav>
+<div id="editUser" class"contianer-fluid">
 
-	<h1>Redigera {{user.name}}</h1>
+	<h1>{{title}}</h1>
 
 	<form name="formEdit" ng-submit="editUser_save()" novalidate>
 

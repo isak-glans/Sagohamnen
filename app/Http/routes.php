@@ -1,5 +1,5 @@
 <?php
-
+use Illuminate\Http\Request;
 Route::auth();
 
 Event::listen('Illuminate\Database\Events\QueryExecuted', function ($query) {
@@ -23,37 +23,25 @@ Route::group(['prefix' => 'api/'], function () {
 		$result = array( 'token' => csrf_token() );
 		return response()->json( $result );
 	});
-	Route::get('username_and_id', function() {
-		$result = new stdClass();
-		$result->signed_in = false;
-
-		if (Auth::check()) :
-			$result->name = Auth::user()->name;
-			$result->id = Auth::user()->id;
-			$result->signed_in = true;
-			//$name = Auth::user()->name;
-		endif;
-
-		return response()->json( $result );
-	});
+	Route::get('username_and_id', 'UserController@info');
 	Route::resource('chronicle', 'ChronicleController', ['except' => ['store', 'update', 'edit']]);
 	Route::resource('character', 'CharacterController', ['except' => ['store', 'update', 'edit']]);
 	Route::get('campaign/{campaign_id}/page/{page_nr}', 'ChronicleController@chronicles_per_page');
-	Route::post('portraits', 'PortraitController@index');
-	Route::get('apa', 'MediaController@apa');
+	//Route::post('portraits', 'PortraitController@index');
+	Route::get("fetch_portraits", 'PortraitController@portraits');
 });
 
 // API: Signed in users
 Route::group(['prefix' => 'api/', 'middleware' => 'auth'], function () {
 	//Route::resource('campaigns', 'CampaignController');
-	Route::resource('campaign', 'CampaignController', ['only' => ['store', 'update', 'edit']]);
+	Route::resource('campaign', 'CampaignController', ['only' => ['store', 'update', 'edit', 'destroy']]);
+	Route::get('activate_campaign/{campaign_id}', 'CampaignController@activate');
 	Route::resource('campaign_user', 'CampaignUserController', ['only' => ['store', 'update', 'edit']]);
 	Route::get('camp_applications_setup/{campaign_id}', 'CampaignController@campaignApplication_setup');
 	Route::get('apply_to_campaign/{campaign_id}', 'CampaignController@apply_to_campaign' );
 	Route::resource('user', "UserController", ['only' => ['store', 'update', 'edit']]);
 	Route::resource('character', 'CharacterController', ['only' => ['store', 'update', 'edit']]);
-	Route::get('character/{id}/leave_campaign', 'CharacterController@leave_campaign');
-	Route::get('character/{id}/set_status/{status}', 'CharacterController@set_status');
+	Route::get('character/{id}/status/{status}', 'CharacterController@set_status');
 	Route::get('admin', function() {
 		echo "Authenticated...";
 	});
@@ -63,10 +51,25 @@ Route::group(['prefix' => 'api/', 'middleware' => 'auth'], function () {
 	Route::resource('chronicle', 'chronicleController', ['only' => ['store', 'update', 'edit']]);
 });
 
-Route::get('/redirect', 'SocialAuthController@redirect');
-Route::get('/callback', 'SocialAuthController@callback');
+// Route::get('/redirect', 'SocialAuthController@redirect');
+//Route::get('/callback/facebook', 'SocialAuthController@callback');
 
-Route::get('/index', function() {
+Route::get('/facebook/callback', 'SocialAuthController@fb_callback');
+Route::get('/callback/{provider}', 'SocialAuthController@callback');
+Route::get('redirect/{provider}', 'SocialAuthController@redirect');
+// Route::get('callback/', function(Request $request)
+// {
+// 	echo $request->query('code');;
+// 	//echo Route::input('code');
+//     return Redirect::to('/callback/facebook');
+// });
+Route::get('/test', function() {
+	if ($request->session()->has('user')) {
+    	echo "user fanns";
+	}
+});
+
+Route::get('index', function() {
 	return view('index');
 });
 

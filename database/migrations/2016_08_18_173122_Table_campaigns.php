@@ -15,6 +15,7 @@ class TableCampaigns extends Migration
         if (! Schema::hasTable('campaigns') ) :
             Schema::create('campaigns', function (Blueprint $table) {
                 $table->increments('id')->unsigned();
+                $table->integer('user_id')->unsigned()->index()->comments = "The gamemaster id";
                 $table->string('name', 255);
                 $table->text('description', 4500);
                 $table->string('genre', 255);

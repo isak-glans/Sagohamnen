@@ -13,7 +13,7 @@ class DatabaseSeeder extends Seeder
     {
         $this->call(UserTableSeeder::class);
         $this->call(CampaignTableSeeder::class);
-        $this->call(CampaignUserSeeder::class);
+        $this->call(LastReadSeeder::class);
         $this->call(CampaignSettingsSeeder::class);
         $this->call(PortraitsSeeder::class);
         $this->call(CharactersSeeder::class);

@@ -1,33 +1,41 @@
 angular.module('ShApp')
 
-.factory('UserService', function($http) {
+.factory('UserService', function($http, $rootScope, UserFactory, $location) {
 
 	var factory = {};
 
 	factory.csrf = "";
+	factory.currentUser = {name : "", id: 0, loggedIn : false };
 
-	factory.name_and_id = function() {
-		return $http.get('./api/username_and_id');
+	factory.loadUser = function() {
+		UserFactory.loadUser().$promise.then(function(response){
+            factory.currentUser = {name :response.name, id: response.id, loggedIn : response.signed_in};
+        	$rootScope.$broadcast('loginChange', {});
+        }, function(error) {
+        	console.log(error);
+        });
+
 	}
 
-	factory.login = function() {
-		console.log("UserService rad 14");
-		/*$http.get('./api/mytoken').then(function(response){
-			console.log("Token: ", response.data.token );
-			factory.csrf = response.data.token;
-            var user_data = {email : 'isakglans@hotmail.com', password : 'bananskruv', _token : response.data.token };
-            $http.post('/login', user_data ).then(function(data){
-                console.log(data);
-                return true;
-            }, function() {
-                return false;
-            });
-        });*/
-	};
+	factory.setUser = function(user){
+		factory.currentUser = user;
+	}
 
 	factory.logout = function() {
-		return $http.get('./logout');
+		console.log("Loggar ut");
+		//return UserFactory.logOut().$promise;
+		UserFactory.logOut().$promise.then(function(response){
+			factory.currentUser = {name : "", id: 0, loggedIn: false};
+			factory.updateLogin();
+			$location.path("/home");
+		}, function(error) {
+			console.log(error);
+		});
 	};
+
+	factory.updateLogin = function(){
+		$rootScope.$broadcast('loginChange', {});
+	}
 
 	return factory;
 

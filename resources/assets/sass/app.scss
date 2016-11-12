@@ -158,7 +158,7 @@
    	==============================================
 */
 
-@import 'pages/_single_campaign';
+@import 'pages/_campaign-single';
 
 /*
 	==============================================
@@ -179,24 +179,36 @@
 	max-width: 150px;
 }
 
+/*
+	==============================================
+		Pages
+   	==============================================
+*/
+@import 'pages/_page';
 
 /*
 	==============================================
 		Single Character
    	==============================================
 */
-@import 'pages/_character_single';
+@import 'pages/_user-single';
+/*
+	==============================================
+		Single Character
+   	==============================================
+*/
+@import 'pages/_character-single';
 
 /*
 	==============================================
 		Campaign Applications
    	==============================================
 */
-@import 'pages/_camp_applications';
+@import 'pages/_campaign-applications';
 
 
 /* Import specific pages */
-@import 'pages/_campaign_apply';
+@import 'pages/_campaign-apply';
 @import 'pages/_media';
 
 /* Media queries*/

@@ -16,7 +16,7 @@ class User extends Authenticatable
      * @var array
      */
     protected $fillable = [
-        'name', 'email', 'description', 'status', 'password',
+        'name', 'email', 'description', 'status', 'password', 'avatar'
     ];
 
     /**
@@ -35,23 +35,26 @@ class User extends Authenticatable
 
     public function campaigns_player()
     {
-        return $this->belongsToMany('Sagohamnen\Campaign\Campaign')->select('id', 'name')->where('campaign_user.status', 1);
+        return $this->belongsTo('Sagohamnen\Campaign\Campaign')->select('id', 'name')->where('status', config('sh.campaign_status_active'));
         //return $this->belongsToMany('Sagohamnen\campaign\campaign', 'sh_campaign_players', 'user_id')->select('id', 'name')->where('sh_campaign_players.status',1);
     }
 
-    public function campaigns_gamemaster()
+    public function gamemaster_campaigns()
     {
-        return $this->belongsToMany('Sagohamnen\Campaign\Campaign')->select('id', 'name')->where('campaign_user.status', 2);
+        return $this->hasMany('Sagohamnen\Campaign\Campaign')->select('id', 'name', 'user_id')->where('status', config('sh.campaign_status_active'));
         //return $this->belongsToMany('Sagohamnen\campaign\campaign')->select('id', 'name')->where('campaign_user.status', 2);
         //return $this->belongsTo('Sagohamnen\campaign\campaign', 'gm_id')->select('id', 'name')->where('campaign.status', 1);
     }
 
-    public function campaigns()
+    public function characters()
     {
-        return $this->belongsToMany('Sagohamnen\Campaign\Campaign')->withPivot('status', 'last_read_chat_id', 'created_at', 'updated_at')->wherePivotIn('status', [
-                config('sh.campaign_user_status_applying'),
-                config('sh.campaign_user_status_playing'),
-                config('sh.campaign_user_status_gamemaster') ])->select('id', 'name');
+        return $this->hasMany('Sagohamnen\Character\Character')->select('id', 'name', 'user_id', 'campaign_id', 'portrait_id')->whereIn('characters.status', [config('sh.campaign_user_status_applying'),
+            config('sh.campaign_user_status_playing')]);
+    }
+
+    public function user_characters()
+    {
+        return $this->hasMany('Sagohamnen\Character\Character')->select('id', 'name', 'user_id', 'campaign_id', 'portrait_id', 'status', 'excerpt')->with('campaign', 'portrait')->whereIn('characters.status', [config('sh.campaign_user_status_applying'), config('sh.campaign_user_status_playing')]);
     }
 
 

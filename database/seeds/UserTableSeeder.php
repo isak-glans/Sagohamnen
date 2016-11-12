@@ -15,7 +15,6 @@ class UserTableSeeder extends Seeder
         DB::table('users')->insert([
         	'name'				=> 'isak',
         	'email'				=> 'isakglans@hotmail.com',
-        	'password'			=>	bcrypt('bananskruv'),
             'description'       => 'Jag bor i Göteborg och jag började att spela rollspel när jag var tonåring.',
             'status'            => 2
     	]);
@@ -23,7 +22,7 @@ class UserTableSeeder extends Seeder
         DB::table('users')->insert([
             'name'              => 'kalle',
             'email'             => 'kalleglans@hotmail.com',
-            'password'          =>  bcrypt('bananskruv'),
+            // 'password'          =>  bcrypt('bananskruv'),
             'description'       =>  'Saknas.',
             'status'            => 1
         ]);

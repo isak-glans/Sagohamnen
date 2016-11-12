@@ -1,0 +1,10 @@
+
+Prolem med pick portrait directivet.
+Spelrummet
+Se över krönikefunktionen.
+
+
+
+NICE TO HAVE
+See arkiverade kampanjer.
+Kunna permanent radera (sätt status 5 typ) arkiverade karaktärer.

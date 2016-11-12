@@ -1,13 +1,75 @@
-<h1>Ny kampanjs rrr </h1>
+
+<div id="new_campaign" class="container-fluid">
+	<h1>Ny kampanj</h1>
+
+	<form name="formNew" ng-submit="submit_new_campaign()" novalidate>
+		<div class="form-group" ng-class="{ 'has-error' : formNew.new_name.$invalid && formNew.new_name.$dirty }">
+			<label for="new_name">Namn</label>
+			<input
+				type="text"
+				name="new_name"
+				id="name"
+				ng-model="form.name"
+				class="form-control"
+				ng-minlength="4"
+				ng-maxlength="25"
+				required />
+		</div>
+		<p ng-show="formNew.new_name.$touched && formNew.new_name.$invalid" class="text-danger">Namnet är ogiltigt. OBS strängen måste bestå av minst 4 tecken, och max 24 .</p>
+
+		<div class="form-group" ng-class="{ 'has-error' : formNew.genre.$invalid && formNew.genre.$dirty }">
+			<label for="genre">Genre</label>
+			<input type="text"
+				name="genre"
+				id="genre"
+				ng-model="form.genre"
+				class="form-control"
+				ng-minlength="3"
+				ng-maxlength="25"
+				required/>
+		</div>
+		<p ng-show="formNew.genre.$touched && formNew.genre.$invalid" class="text-danger">Genré är ogiltig. OBS strängen måste bestå av 4-25 tecken.</p>
+
+		<div class="form-group">
+			<label for="text">Beskrivning</label>
+			<textarea
+				name="description"
+				id="text"
+				ng-model="form.description"
+				class="form-control"
+				ng-minlength="4"
+				ng-maxlength="4500"
+				rows="8"
+				required/></textarea>
+		</div>
+		<p ng-show="formNew.description.$error.minlength" class="help-block">Beskrivningen är för kort, eller saknas.</p>
+		<p ng-show="formNew.description.$error.maxlength" class="help-block">Beskrivningen är för långt.</p>
+
+		<div class="form-group">
+			<label for="max_nr_players">Maxantal spelare</label>
+			<input
+				type="number"
+				id = "max_nr_players"
+				name="max_nr_players"
+				ng-model="form.max_nr_players"
+				min="1"
+				max="10"
+				ng-init="form.max_nr_players=4"
+				class="form-control" \>
+		</div>
+		<p ng-show="formNew.max_nr_players.$touched && formNew.max_nr_players.$invalid" class="text-danger">Maxantalet spelare är ogiltigt. Siffran får minst vara 1, och högst 10.</p>
+
+		<div class="form-group">
+			<div class="col-sm-12">
+				<button class="btn btn-default pull-right" ng-click="cancel()"><span class="glyphicon glyphicon-remove"></span> Ångra</button>
+				<button
+					type		="submit"
+					class		="btn btn-primary pull-right"
+					ng-disabled	="formNew.$invalid"><span class="glyphicon glyphicon-ok"></span> Spara</button>
+			</div>
+		</div>
+
+	</form>
+</div>
 
 
-	<input type="hidden" name="_token" value="HhcYQefWF0cIzson7ALBdRGsPZ0fcaBoeZSVlkDu">
-	<input ng-model="campaignName" type="text" name="name">
-	<input ng-model="campaignGenre" type="text" name="genre">
-	<textarea ng-model="campaignText" name="text"></textarea>
-	<button ng-click="newCampaing()">Skicka</button>
-
-
-{{ campaignName }}
-{{ campaignGenre }}
-{{ campaignText }}

@@ -1,6 +1,6 @@
 
-<div ng-controller="CampaignController" ng-init="editCampaigns_setup()">
-	<h1>{{ campaign.name }}</h1>
+<div id="edit_campaign" class="container-fluid">
+	<h1>{{ headerName }}</h1>
 
 	<form name="formEdit" ng-submit="editCampaign_save()" novalidate>
 		<div class="form-group" ng-class="{ 'has-error' : formEdit.new_name.$invalid && formEdit.new_name.$dirty }">
@@ -37,6 +37,7 @@
 				id="text"
 				ng-model="form.description"
 				class="form-control"
+				ng-minlength="4"
 				ng-maxlength="4500"
 				rows="8"
 				required/></textarea>
@@ -59,13 +60,12 @@
 
 		<div class="form-group">
 			<div class="col-sm-12">
-				<button class="btn btn-default pull-right" ng-click="editCampaign_cancel()">Ångra</button>
-				<input
+				<button class="btn btn-default pull-right" ng-click="editCampaign_cancel()"><span class="glyphicon glyphicon-remove"></span> Ångra</button>
+				<button class="btn btn-danger" type="button" ng-click="removeCampaign()"><span class="glyphicon glyphicon-trash"></span> Ta bort</button>
+				<button
 					type		="submit"
 					class		="btn btn-primary pull-right"
-					ng-disabled	="formEdit.$invalid"
-					value		="Spara">
-				</input>
+					ng-disabled	="formEdit.$invalid"><span class="glyphicon glyphicon-ok"></span> Spara</button>
 			</div>
 		</div>
 	</form>

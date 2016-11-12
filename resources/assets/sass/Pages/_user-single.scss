@@ -1,0 +1,30 @@
+#single_user .characters {
+	padding: 10px;
+  background-color: rgba(210, 201, 201, 0.44);
+  border: 1px solid #fffcfc;
+  border-radius: 10px;
+  margin-bottom: 10px;
+  animation: fade 1s linear;
+}
+#single_user .characters .row {
+	margin-bottom: 10px;
+}
+#single_user .character_portrait {
+	background-repeat: no-repeat;
+	background-size: contain;
+	width:60px;
+	height:80px;
+}
+
+@keyframes fade {
+  0% { opacity:0; background-color:green }
+  100% { opacity: 1 }
+}
+
+#user-campaigns {
+  margin-top: 20px;
+}
+
+#user-characters {
+  margin-top: 20px;
+}
