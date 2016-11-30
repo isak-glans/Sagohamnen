@@ -55,4 +55,6 @@ class User_BL {
 		if ($this->i_signed_in() && Auth::id() == $user_id) return true;
 		return false;
 	}
+
+
 }

@@ -2,7 +2,6 @@
 namespace Sagohamnen\Campaign;
 
 use Sagohamnen\Campaign\Campaign;
-use Sagohamnen\Campaign\Campaign_user;
 use Sagohamnen\Portrait\Portrait;
 use Sagohamnen\Character\Character;
 use DB;
@@ -62,22 +61,10 @@ class Campaign_repository
 		return Campaign::where(['user_id' => $user_id, 'status' => config('sh.campaign_status_active')])->count();
 	}
 
-	public function count_nr_players($campaign_id)
-	{
-		return Campaign_user::where(['campaign_id' => $campaign_id, 'status' => $this->status_player ])->count();
-	}
-
-	public function is_user_player($campaign_id,$user_id)
-	{
-		return Campaign_user::where(['campaign_id' => $campaign_id, 'user_id' => $user_id, 'status' => config('sh.campaign_user_status_playing') ])->count() > 0 ;
-	}
-
 	public function campaign_user_info($campaign_id, $user_id)
 	{
-		return Campaign::select('id')->where(['campaign_id' => $campaign_id, 'user_id' => $user_id])->wherePivot('user_id', $user_id)->first();
+		return Campaign::select('id')->where(['id' => $campaign_id, 'user_id' => $user_id])->wherePivot('user_id', $user_id)->first();
 	}
-
-
 
 	public function campaign_user_status($campaign_id, $user_id)
 	{
@@ -93,7 +80,7 @@ class Campaign_repository
 
 	public function identify_campaign($campaign_id)
 	{
-		return Campaign::where('id', $campaign_id)->select('name', 'id')->first();
+		return Campaign::where('id', $campaign_id)->select('name', 'id', 'user_id')->first();
 	}
 	public function max_nr_players($campaign_id)
 	{
@@ -136,6 +123,11 @@ class Campaign_repository
 	public function campaign_applications_setup($campaign_id)
 	{
 		return Campaign::select('id', 'name', 'max_nr_players')->where(['id' => $campaign_id, 'status' => config('sh.campaign_status_active')])->with('characters.portrait')->first();
+	}
+
+	public function gamemaster_with_avatar($campaign_id)
+	{
+		return Campaign::select('user_id')->where('id', $campaign_id)->with('gamemaster_avatar')->first();
 	}
 
 }

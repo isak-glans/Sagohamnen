@@ -7,6 +7,7 @@ angular.module('ShApp')
     $scope.data.players = [];
     $scope.data.applicants = [];
 
+
 	$scope.setupApplications = function(){
 		var campaignId = $routeParams.campaignId;
         if( campaignId == null) $location.path("error/404");

@@ -5,6 +5,7 @@ use Sagohamnen\Campaign\Campaign;
 use Sagohamnen\Last_read\Last_read;
 use DB;
 use App\User;
+use Carbon\Carbon;
 
 class Last_read_repository
 {
@@ -24,6 +25,22 @@ class Last_read_repository
 		$row->campaign_id = $campaign_id;
 		$row->user_id = $user_id;
 		$row->save();
+	}
+
+	public function update_my_activity($campaign_id,$user_id)
+	{
+		$row = Last_read::select('id','activity')->where(['campaign_id' => $campaign_id, 'user_id' => $user_id])->first();
+		//var_dump($row); $now->subMinute()
+		if ($row){
+			$row->activity = Carbon::now();
+			$row->save();
+		}
+	}
+
+	public function active_users($campaign_id)
+	{
+		$oneMinute = Carbon::now()->subMinute(1);
+		return Last_read::select('user_id')->where('campaign_id', $campaign_id)->where('activity', '>', $oneMinute)->get();
 	}
 
 }

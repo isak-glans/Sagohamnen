@@ -1,37 +1,65 @@
-<div id="pick-portrait" class="panel panel-default">
+<div id="pick-portrait" class="panel panel-default" ng-init="init()">
 	<div class="panel-heading">
 		Porträtt
 	</div>
 
 	<div class="panel-body">
-		<div class="container-fluid">
-			<label>Kön</label>
-			<select name="gender" ng-model="gender" ng-options="x.label for x in genders" class="form-control">
-			</select>
 
-			<label>Ras</label>
-			<select ng-model="race" ng-options="x.label for x in races" class="form-control">
-			</select>
-
-			<label>Klädsel</label>
-			<select ng-model="clothes" class="form-control">
-				<option value=1>-</option>
-				<option value=1>Krigare</option>
-				<option value=1>Mystiker</option>
-				<option value=1>Kriminell</option>
-				<option value=1>Handelsman</option>
-			</select>
-
+		<div class="form-group" ng-init="search.gender='male'" class="col-sm-4">
+			<label>Kön: </label>
+			<span class="radio-inline" >
+				<label>
+				<input type="radio" ng-model="search.gender" value="male" >Man
+				</label>
+			</span>
+			<span class="radio-inline">
+				<label>
+				<input type="radio" ng-model="search.gender" value="female">Kvinna
+				</label>
+			</span>
+			<span class="radio-inline">
+				<label>
+				<input type="radio" ng-model="search.gender" value="!!">Båda
+				</label>
+			</span>
 		</div>
 
-		<div id="rp_portrait_results" class="row" >
-			<div class="row">
-				<div ng-repeat="portrait in portraits | filter:{tags: gender.label}:true | filter: {tags: race.label }:true" class="col-sm-1">
-					<div style="background-image: url('{{portrait.thumbnail}}');" alt="porträtt" class="portrait_thumbnail"></div>
+        <div class="row">
+        	<div class="col-sm-8">
+        		<div class="row">
+        			<div class="col-sm-12">
+        				<div class="form-group">
+	        			<label>Sökord</label>
+	        			<input type="text" class="form-control" placeholder="Search" ng-model="searchFor" />
+	        			</div>
+        			</div>
+        		</div>
+        		<div class="row">
+        			<div class="col-sm-12">
+	        			<span ng-repeat="item in portraitSearch = ( portraits | filter: {tags :searchFor} | filter: {tags :search.gender}:exceptEmptyComparator ) | start: (bigCurrentPage - 1) * pageSize | limitTo: pageSize ">
+			                <div style="background-image: url('{{item.medium}}')" class="portrait_thumbnail" title="{{item.tags}}" ng-click="selectImg(item)"></div>
+			            </span>
+		            </div>
+        		</div>
+        		<div class="row">
+        			<div class="col-sm-12">
+    					<ul uib-pagination total-items="portraitSearch.length" items-per-page="pageSize" ng-model="bigCurrentPage" max-size="maxSize" class="pagination-sm" boundary-links="true" force-ellipses="true"></ul>
+    				</div>
+        		</div>
+        	</div>
+        	<div class="col-sm-4">
+				<div style="background-image: url('{{selectedPortrait.url}}')" class="portrait_picker_inspect"></div>
+        	</div>
+        </div>
+
+        <div class="row">
+        	<div class="col-sm-2 pull-right">
+        		<div class="btn-group" role="group" aria-label="...">
+				  <button type="button" class="btn btn-primary" ng-click="pickImg()">Välj</button>
 				</div>
-			</div>
-		</div>
+        	</div>
+        </div>
 
-	</div>
 	</div>
 </div>
+

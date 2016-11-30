@@ -35,8 +35,8 @@ class User extends Authenticatable
 
     public function campaigns_player()
     {
-        return $this->belongsTo('Sagohamnen\Campaign\Campaign')->select('id', 'name')->where('status', config('sh.campaign_status_active'));
-        //return $this->belongsToMany('Sagohamnen\campaign\campaign', 'sh_campaign_players', 'user_id')->select('id', 'name')->where('sh_campaign_players.status',1);
+        return $this->belongsTo('Sagohamnen\Character\Character')->select('id', 'name')->where('status', config('sh.character_status_playing'));
+        /*return $this->belongsTo('Sagohamnen\Campaign\Campaign')->select('id', 'name')->where('status', config('sh.campaign_status_active'));*/
     }
 
     public function gamemaster_campaigns()

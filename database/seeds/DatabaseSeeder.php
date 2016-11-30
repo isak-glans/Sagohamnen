@@ -18,10 +18,9 @@ class DatabaseSeeder extends Seeder
         $this->call(PortraitsSeeder::class);
         $this->call(CharactersSeeder::class);
         $this->call(ChronicleSeeder::class);
-        $this->call(CharacterChronicleSeeder::class);
         $this->call(TagSeeder::class);
         $this->call(PortraitTagSeeder::class);
-        $this->call(ChatSeeder::class);
+        $this->call(RpgChatSeeder::class);
 
         /*DB::table('sh_campaign_media')->insert([
             'campaign_id'   => 1,

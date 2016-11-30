@@ -30,6 +30,11 @@ class Character extends Model
         return $this->belongsTo('Sagohamnen\Campaign\Campaign')->select('id', 'name', 'user_id');
     }
 
+    public function user_avatars()
+    {
+        return $this->belongsTo('App\User', 'user_id')->select('id', 'name', 'avatar');
+    }
+
     /*public function campagin_user_status()
     {
         return $this->belongsTo('Sagohamnen\Campaign\Campaign')->select('id')->withPivot('status');

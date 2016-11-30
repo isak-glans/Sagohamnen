@@ -20,4 +20,21 @@ class Chronicle_repository
 		return Chronicle::where('campaign_id', $campaign_id)->max('id');
 	}
 
+	public function newest_chronicle_per_id($campaign_id, $last_id)
+	{
+		$take = 40;
+		return $chronicles = Chronicle::where('campaign_id', $campaign_id)->where('id', '>', $last_id)->with('character')->take($take)->orderBy('id', 'DESC')->get();
+		/*return $chronicles = Chronicle::where('campaign_id', $campaign_id)->where('id', '>', $last_id)->with('user')->take($take)->get();*/
+	}
+
+	public function store($obj_to_store)
+	{
+		$chronicle = new Chronicle();
+		$chronicle->user_id 		=  $obj_to_store->user_id;
+		$chronicle->text 			=  $obj_to_store->text;
+		$chronicle->character_id 	=  $obj_to_store->character_id;
+		$chronicle->campaign_id 	=  $obj_to_store->campaign_id;
+		$chronicle->save();
+	}
+
 }

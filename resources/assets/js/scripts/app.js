@@ -1,4 +1,4 @@
-var sagohamnenApp = angular.module('ShApp', ["ngRoute", "ngSanitize", "ngResource",  "ngMaterial" ]);
+var sagohamnenApp = angular.module('ShApp', ["ngRoute", "ngSanitize", "ngResource",  "ngMaterial", 'ui.bootstrap', 'luegg.directives', 'ui.select' ]);
 
 sagohamnenApp.config(function($routeProvider) {
     $routeProvider
@@ -66,6 +66,9 @@ sagohamnenApp.config(function($routeProvider) {
         resolve: {
             identifyCampaign: function(CampaignFactory,$route){
                 return CampaignFactory.identify({id : $route.current.params.campaignId}).$promise;
+            },
+            portraitData : function(PortraitService){
+                return PortraitService.loadPortraits();
             }
         }
     })
@@ -93,7 +96,24 @@ sagohamnenApp.config(function($routeProvider) {
     })
     .when("/edit_character/:characterId", {
         templateUrl : "views/characters/edit_character.html",
-        controller  : 'EditCharacterCtrl'
+        controller  : 'EditCharacterCtrl',
+        resolve : {
+            portraitData : function(PortraitService){
+                return PortraitService.loadPortraits();
+            }
+        }
+    })
+    .when("/rpg/:campaignId", {
+        templateUrl : "views/rpg/single_rpg.html",
+        controller  : 'SingleRpgCtrl',
+        resolve: {
+            setupData: function(CampaignFactory,$route){
+                return CampaignFactory.setupRpg({id : $route.current.params.campaignId}).$promise;
+            },
+            portraitData : function(PortraitService){
+                return PortraitService.loadPortraits().$promise;
+            }
+        }
     })
     .when("/error/401", {
         templateUrl : "views/error/401.html"
@@ -135,12 +155,7 @@ sagohamnenApp.config(['$httpProvider', function ($httpProvider) {
 }]);
 
 
-sagohamnenApp.filter("show_linebreaks", function($filter) {
- return function(data) {
-   if (!data || data == null || typeof data !== 'string' ) return data;
-   return data.replace(/\n\r?/g, '<br />');
- };
-});
+
 
 
 

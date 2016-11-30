@@ -14,10 +14,11 @@ class TableLastRead extends Migration
     {
         Schema::create('last_read', function (Blueprint $table) {
             $table->increments('id')->unsigned();
-            $table->integer('user_id')->unsigned();
-            $table->integer('campaign_id')->unsigned();
+            $table->integer('user_id')->unsigned()->index();
+            $table->integer('campaign_id')->index()->unsigned();
             $table->integer('chronicle_id')->unsigned()->default(0);
             $table->integer('chat_id')->unsigned()->default(0);
+            $table->timestamp('activity')->index()->useCurrent = true;
         });
     }
 

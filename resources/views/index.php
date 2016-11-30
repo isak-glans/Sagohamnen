@@ -28,12 +28,19 @@
 		</ol>
 
 		<div id="app_content">
-		    <div ng-view ></div>
+			<route-loading-indicator></route-loading-indicator>
+		    <div ng-view ng-show='!isRouteLoading' ></div>
 	    </div>
 
 	    <div id="app_footer"></div>
     </div> <!-- end app_wrapper -->
 
-    <script src="assets/js/app.js"></script>
+	<?php if ( Config::get('app.debug') ) { ?>
+	    <script src="assets/js/vendors.js"></script>
+	    <script src="assets/js/sagohamnen.js"></script>
+	<?php } else { ?>
+	    <script src="assets/js/sagohamnen_build.js"></script>
+	<?php } ?>
+
 </body>
 </html>

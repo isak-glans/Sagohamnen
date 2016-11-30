@@ -17,7 +17,12 @@ class Campaign extends Model
 
     public function gamemaster()
     {
-        return $this->belongsTo('App\User', 'user_id')->select('id', 'name')->where('status', '>', config('sh.campaign_status_archived'));
+        return $this->belongsTo('App\User', 'user_id')->select('id', 'name')->whereIn('status', [config('sh.user_status_active'), config('sh.user_status_admin')]);
+    }
+
+    public function gamemaster_avatar()
+    {
+        return $this->belongsTo('App\User', 'user_id')->select('id', 'name', 'avatar')->whereIn('status', [config('sh.user_status_active'), config('sh.user_status_admin')]);
     }
 
     public function players()

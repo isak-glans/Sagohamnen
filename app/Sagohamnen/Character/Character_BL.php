@@ -48,6 +48,20 @@ class Character_BL
 			//$result->secret_data = $result->can_edit;
 		}
 
+		// If status archived, check if user are
+		// allowed to set it back as player.
+		// If he/she already have 1 character applying, this
+		// can not be allowed.
+		if ($result->status == config('sh.character_status_archived'))
+		{
+			// User are not allowed to edit it.
+			$result->can_edit = false;
+
+			$nr_character_not_archived = $this->char_rep->count_mine_not_archived($my_id, $result->campaign->id);
+			//echo "Antal: " . $nr_character_not_archived. " max: " . config('sh.max_nr_characters_in_campaign');
+			$result->can_reactivate = $nr_character_not_archived < config('sh.max_nr_characters_in_campaign');
+		}
+
 		return $result;
 	}
 

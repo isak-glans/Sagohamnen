@@ -57,6 +57,44 @@ class PortraitsSeeder extends Seeder
             'id'            => 11,
             'thumbnail' => "http://localhost:8000/assets/img/portraits/man13.jpg",
             'medium' =>"http://localhost:8000/assets/img/portraits/man13.jpg"]);
+
+        DB::table('portraits')->insert([
+            'id'            => 12,
+            'thumbnail' => "http://localhost:8000/assets/img/portraits/man14.jpg",
+            'medium' =>"http://localhost:8000/assets/img/portraits/man14.jpg"]);
+        DB::table('portraits')->insert([
+            'id'            => 13,
+            'thumbnail' => "http://localhost:8000/assets/img/portraits/man15.jpg",
+            'medium' =>"http://localhost:8000/assets/img/portraits/man15.jpg"]);
+        DB::table('portraits')->insert([
+            'id'            => 14,
+            'thumbnail' => "http://localhost:8000/assets/img/portraits/man16.jpg",
+            'medium' =>"http://localhost:8000/assets/img/portraits/man16.jpg"]);
+        DB::table('portraits')->insert([
+            'id'            => 15,
+            'thumbnail' => "http://localhost:8000/assets/img/portraits/man17.jpg",
+            'medium' =>"http://localhost:8000/assets/img/portraits/man17.jpg"]);
+         DB::table('portraits')->insert([
+            'id'            => 16,
+            'thumbnail' => "http://localhost:8000/assets/img/portraits/female6.jpg",
+            'medium' =>"http://localhost:8000/assets/img/portraits/female6.jpg"]);
+         DB::table('portraits')->insert([
+            'id'            => 17,
+            'thumbnail' => "http://localhost:8000/assets/img/portraits/man18.jpg",
+            'medium' =>"http://localhost:8000/assets/img/portraits/man18.jpg"]);
+         DB::table('portraits')->insert([
+            'id'            => 18,
+            'thumbnail' => "http://localhost:8000/assets/img/portraits/man19.jpg",
+            'medium' =>"http://localhost:8000/assets/img/portraits/man19.jpg"]);
+         DB::table('portraits')->insert([
+            'id'            => 19,
+            'thumbnail' => "http://localhost:8000/assets/img/portraits/man20.jpg",
+            'medium' =>"http://localhost:8000/assets/img/portraits/man20.jpg"]);
+         DB::table('portraits')->insert([
+            'id'            => 20,
+            'thumbnail' => "http://localhost:8000/assets/img/portraits/man21.jpg",
+            'medium' =>"http://localhost:8000/assets/img/portraits/man21.jpg"]);
+
         /*DB::table('portraits')->insert([
             'id'            => 2,
             'thumbnail' => "www.sagohamnen.se/assets/img/portraits/man1.jpg",

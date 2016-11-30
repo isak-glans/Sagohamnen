@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use Carbon\Carbon;
 use Auth;
 use Session;
 use App\Http\Requests;
@@ -23,11 +24,11 @@ class ApiController extends Controller
     {
         $user = Auth::user();
         if ($user) {
-            $last_activity = Session::get('last_activity');
+            $last_activity = Carbon::parse( Session::get('last_activity') );
+            $now = Carbon::now();
             if ($last_activity !== null ){
-                $now = Carbon::now();
-                $minute_ago = $now - 60;
-                if ( $last_activity <= $minute_ago ) {
+                // See if last activity less then one minute ago.
+                if ( $last_activity->lt( $now->subMinute() ) ) {
                     $user->updated_at = $now;
                     $user->save();
                     Session::put('last_activity', $now);

@@ -10,7 +10,8 @@ angular.module('ShApp')
             applyingPlayingCharacters : { method : "GET", url: "/api/camp_applications_setup/:id"},
             editCampaign : { method : "GET", url : "/api/campaign/:id/edit" },
             update : { method : "PUT", url : "/api/campaign/:id" },
-            activate : {method : "GET", url : "/api/activate_campaign/:id "}
+            activate : {method : "GET", url : "/api/activate_campaign/:id "},
+            setupRpg : {method : "GET", url : "/api/setup_rpg/:id "}
         });
     }
 ]);

@@ -8,10 +8,6 @@ Event::listen('Illuminate\Database\Events\QueryExecuted', function ($query) {
     var_dump($query->time);*/
 });
 
-Route::get('blogrep', function() {
-	new \Sagohamnen\Campaign\Campaign_repository;
-});
-
 // API
 Route::group(['prefix' => 'api/'], function () {
 	Route::resource('campaign', 'CampaignController', ['except' => ['store', 'update', 'edit']]);
@@ -42,13 +38,10 @@ Route::group(['prefix' => 'api/', 'middleware' => 'auth'], function () {
 	Route::resource('user', "UserController", ['only' => ['store', 'update', 'edit']]);
 	Route::resource('character', 'CharacterController', ['only' => ['store', 'update', 'edit']]);
 	Route::get('character/{id}/status/{status}', 'CharacterController@set_status');
-	Route::get('admin', function() {
-		echo "Authenticated...";
-	});
-	Route::post('admin', function() {
-		echo "Authenticated...";
-	});
+	Route::resource('rpg_chat', 'RpgChatController');
 	Route::resource('chronicle', 'chronicleController', ['only' => ['store', 'update', 'edit']]);
+	Route::get('rpg_update/{campaign_id}/newest/{chat_id}/{chronicle_id}', 'RpgController@rpg_update');
+	Route::get('setup_rpg/{campaign_id}', 'RpgController@rpg_setup');
 });
 
 // Route::get('/redirect', 'SocialAuthController@redirect');

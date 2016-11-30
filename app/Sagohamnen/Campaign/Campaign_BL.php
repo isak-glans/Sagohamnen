@@ -9,11 +9,12 @@ use Sagohamnen\Campaign\Campaign_repository;
 use Sagohamnen\User\User_BL;
 use Sagohamnen\User\User_repository;
 use Sagohamnen\Chronicle\Chronicle_BL;
-use Sagohamnen\Chat\Chat_BL;
+use Sagohamnen\Rpg_chat\Rpg_chat_BL;
 use Sagohamnen\Character\Character_BL;
 use Sagohamnen\Character\Character_repository;
 use Sagohamnen\Last_read\Last_read_repository;
 use App\Http\Requests;
+use DB;
 
 class Campaign_BL {
 
@@ -90,7 +91,8 @@ class Campaign_BL {
 
 		// Decide the user relation to campaign.
 		$relation = $this->sort_and_decide_relation($data->characters, $my_id, $data->user_id);
-		$data->can_edit = $relation->i_am_gm == true;
+		$data->i_am_gm = $relation->i_am_gm;
+		$data->i_am_player = $relation->i_am_player;
 		unset($data->characters);
 		$data->players 		= $relation->players;
 		$data->applicants 	= $relation->applicants;
@@ -99,7 +101,7 @@ class Campaign_BL {
 
 		// Fetch repositories.
 		$chronicle_BL = new Chronicle_BL();
-  		$chat_BL = new Chat_BL();
+  		$chat_BL = new Rpg_chat_BL();
 		$last_read_rep = new Last_read_repository();
 
 		// Last read
@@ -109,7 +111,7 @@ class Campaign_BL {
 		$last_read_chronicle_id = $last_read_object['chronicle_id'];
 		$last_read_chat_id = $last_read_object['chat_id'];
 
-		// If no row, the create one.
+		// If no row for last_read, then create one.
 		if ( $last_read_object == null) :
 			$last_read_rep->create_new($campaign_id, $my_id);
 			$last_read_chronicle_id = 0;
@@ -342,6 +344,7 @@ class Campaign_BL {
 	{
 		return $this->camp_rep->prep($campaign_id, $my_id);
 	}
+
 
 
 }

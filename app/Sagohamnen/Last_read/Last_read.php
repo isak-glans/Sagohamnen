@@ -21,4 +21,9 @@ class Last_read extends Model
     	return $this->hasMany('Sagohamnen\Campaign\Campaign', 'id', 'campaign_id')->select('name', 'id');
     }*/
 
+    public function user()
+    {
+        return $this->belongsTo('App\User')->select('id', 'name');
+    }
+
 }

@@ -1,27 +1,10 @@
 var elixir = require('laravel-elixir');
 
-/*
- |--------------------------------------------------------------------------
- | Elixir Asset Management
- |--------------------------------------------------------------------------
- |
- | Elixir provides a clean, fluent API for defining some basic Gulp tasks
- | for your Laravel application. By default, we are compiling the Sass
- | file for our application, as well as publishing vendor resources.
- |
- */
-
 elixir(function(mix) {
 
-    /*mix.sass('app.scss')
-    	.version('css/app.css');*/
+    mix.copy('bower_components/font-awesome-sass/assets/fonts', 'public/assets/fonts');
 
-    // Copy files
-    elixir(function(mix) {
-        mix.copy('bower_components/font-awesome-sass/assets/fonts', 'public/assets/fonts');
-    });
-
-    // It looks in folder resources/assets/sass
+    // Compile the SASS files
     mix.sass([
         '../../../bower_components/angular-material/angular-material.scss',
         '**/*.scss',
@@ -29,36 +12,44 @@ elixir(function(mix) {
         '../../../bower_components/bootstrap-sass/assets/stylesheets/_bootstrap.scss',
         //'../../../bower_components/font-awesome-sass/assets/stylesheets/_font-awesome.scss',
         //'../../../bower_components/bootstrap-social/bootstrap-social.scss',
-    ], 'public/assets/css/app.css');
+        //'../../../bower_components/angular-bootstrap/ui-bootstrap.csp.css'
+    ], 'public/assets/css/sass-bundle.css');
 
+    mix.styles([
+        // This file are for styling selection options and more.
+        '../../../bower_components/angular-ui-select/dist/select.min.css',
+        '../../../public/assets/css/sass-bundle.css'
+    ],'public/assets/css/app.css');
 
-
-    // Looks in folder: resources/assets/js/
+    // Vendor scripts
     mix.scripts([
-    	'../../../bower_components/angular/angular.js',
-        '../../../bower_components/angular-resource/angular-resource.js',
-    	'../../../bower_components/angular-route/angular-route.js',
-        '../../../bower_components/angular-sanitize/angular-sanitize.js',
-        '../../../bower_components/jquery/dist/jquery.js',
-        '../../../bower_components/bootstrap-sass/assets/javascripts/bootstrap.js',
-        '../../../bower_components/angular-aria/angular-aria.js',
-        '../../../bower_components/angular-animate/angular-animate.js',
-        '../../../bower_components/angular-material/angular-material.js',
-        //'../../../bower_components/angular-bootstrap/ui-bootstrap-tpls.min.js',
-        // '../../../bower_components/angular-bootstrap/ui-bootstrap.min.js',
+    	'angular/angular.js',
+        'angular-resource/angular-resource.js',
+    	'angular-route/angular-route.js',
+        'angular-sanitize/angular-sanitize.js',
+        'jquery/dist/jquery.js',
+        'bootstrap-sass/assets/javascripts/bootstrap.js',
+        'angular-aria/angular-aria.js',
+        'angular-animate/angular-animate.js',
+        'angular-material/angular-material.js',
+        'angular-scroll-glue/src/scrollglue.js',
+        'angular-bootstrap/ui-bootstrap-tpls.min.js',
+        'angular-ui-select/dist/select.min.js',
+    ], 'public/assets/js/vendors.js', 'bower_components/');
 
-        //'../../../bower_components/bootstrap/dist/js/bootstrap.min.js',
-        //'../../../bower_components/bootstrap-sass/assets/javascripts/bootstrap.min.js',
-       	'scripts/**/*.js',
-        /*'scripts/controllers/MainController.js',
-       	'scripts/controllers/CampaignController.js',
-       	'scripts/services/UserService.js',
-        'scripts/services/DbService.js'*/
-    ], 'public/assets/js/app.js');
+    mix.scripts([
+        'scripts/**/*.js'
+    ], 'public/assets/js/sagohamnen.js');
 
-    /*
-	'../../../node_modules/angular/angular.min.js',
-    '../../../node_modules/angular-route/angular-route.min.js',*/
+    // Compress script for production.
+    if (elixir.config.production) {
+        mix.scripts([
+            'sagohamnen.js',
+            'vendors.js',
+        ], 'public/assets/js/sagohamnen_build.js', 'public/assets/js/');
+    }
 
 });
+
+
 

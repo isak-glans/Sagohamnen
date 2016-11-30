@@ -24,9 +24,12 @@
     "font-awesome-sass": "^4.6.2",
     "bootstrap-social": "^5.0.0",
     "angular-resource": "^1.5.8",
-    "angular-material": "^1.1.1"
+    "angular-material": "^1.1.1",
+    "angular-scroll-glue": "^2.1.0",
+    "angular-ui-select": "^0.19.6"
   },
   "devDependencies": {
-    "angular-bootstrap": "^2.2.0"
+    "angular-bootstrap": "^2.2.0",
+    "angular-mocks": "^1.5.8"
   }
 }

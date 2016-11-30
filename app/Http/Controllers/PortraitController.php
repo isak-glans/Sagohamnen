@@ -80,6 +80,7 @@ class PortraitController extends ApiController
 
     public function portraits()
     {
+        sleep(5);
         // Return all portraits with tags as a json file.
         try {
             $data = $this->portrait_BL->portraits_with_tags();
@@ -89,6 +90,7 @@ class PortraitController extends ApiController
             $portraits =  array();
             foreach($data as $row) {
                 $obj            = new \StdClass;
+                $obj->id        = $row->id;
                 $obj->medium    = $row->medium;
                 $obj->thumbnail = $row->thumbnail;
                 $obj->tags      = array();

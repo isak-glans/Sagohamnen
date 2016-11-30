@@ -1,17 +1,19 @@
 angular.module('ShApp')
 
 // inject the Comment service into our controller
-.controller('MainController', function($scope, UserService, PortraitService, $rootScope) {
+.controller('MainController', function($scope, UserService, PortraitService, $rootScope, SessionFactory) {
 
-    //Here your view content is fully loaded !!
-    $scope.$on('$viewContentLoaded', function(){
-        loadUser();
-        PortraitService.loadPortraits();
-    });
+	$scope.init = function(){
+		setTimeout(function() {
+	        login();
+		},1 );
+	}
 
-    function loadUser(){
-        UserService.loadUser();
+    function login(){
+        UserService.login();
     };
 
+    $scope.init();
 });
+
 

@@ -11,6 +11,7 @@ use Sagohamnen\Campaign\Campaign_user;
 // use App\Sh_library\Transformers\DbResults;
 use Sagohamnen\Campaign\Campaign_repository;
 use Sagohamnen\Campaign\Campaign_BL;
+use Sagohamnen\Character\Character_repository;
 
 
 class campaignController extends ApiController
@@ -21,7 +22,7 @@ class campaignController extends ApiController
 
 	public function __construct()
 	{
-		$this->Campaign_repository = new Campaign_repository();
+		$this->rep = new Campaign_repository();
         $this->Camp_BL = new Campaign_BL();
 	}
 
@@ -164,7 +165,6 @@ class campaignController extends ApiController
     {
         //$Character_BL
         try {
-            echo "inne2";
             $result = $this->Camp_BL->campaign_applications_setup($campaign_id);
             if($result === false) return $this->respondNotAuthorized();
             return $this->respond($result);
@@ -173,6 +173,5 @@ class campaignController extends ApiController
         {
             return $this->respondInternalError();
         }
-
     }
 }

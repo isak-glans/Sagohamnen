@@ -1,0 +1,150 @@
+<div id="single_rpg" ng-init="init()" style="container-fluid">
+	<h1>{{campaginData.name}}</h1>
+
+	<div class="row">
+		<div class="col-sm-4">
+			 <uib-tabset active="activeJustified" justified="true">
+      			<uib-tab index="0" heading="Konversation">
+      				<div id="chat">
+						<div class="chatWrapper" scroll-glue>
+							<p ng-repeat="chat in chats" title="{{chat.date | date:'yyyy-MM-dd \k\l HH:mm'}}">
+								<label ng-href="/user/{{chat.user_id}}">{{chat.name}}</label>
+								<span>{{chat.text}}</span>
+							</p>
+						</div>
+					</div>
+      			</uib-tab>
+      			<uib-tab index="1" heading="Tärningshistorik">
+      				<div scroll-glue>
+						<p ng-repeat="die in dices" title="{{die.date | date: 'yyyy-MM-dd \k\l HH:mm'}} | reverse">
+							<label ng-href="/user/{{die.user_id}}">{{die.name}}</label>
+							<span>{{die.text}}</span>
+						</p>
+					</div>
+      			</uib-tab>
+      		</uib-tabset>
+		</div>
+		<div class="col-sm-8">
+			<div id="chronicle">
+				<div class="chronicleWrapper" scroll-glue>
+					<div ng-repeat="chronicle in chronicles" title="{{chronicle.created_at | date: 'yyyy-MM-dd \k\l HH:mm'}}" class="row {{chronicle.styleClass}}">
+						<div class="col-sm-1" ng-show="chronicle.styleClass != 'entry-chronicle-gm' ">
+							<div ng-style="{'background-image':'url({{chronicle.character.portrait}})'}" alt="bild" class="portrait" title="{{chronicle.character.name}}" ng-href="/user/{{chronicle.character.id}}" ng-show="chronicle.character">
+							</div>
+						</div>
+						<div class="col-sm-11 text-column">{{chronicle.text}}</div>
+					</div>
+				</div> <!-- container -->
+			</div> <!-- chronicle -->
+		</div> <!-- col-sm-8 -->
+	</div>
+
+	<div id="input">
+		<form name="outerForm" class="tab-form-demo">
+	    	<uib-tabset active="activeForm">
+				<uib-tab index="0" heading="Konversation">
+					<ng-form name="chatForm" novalidate >
+						<div class="form-group">
+							<label>Meddelande</label>
+							<div class="row">
+								<div class="col-sm-5">
+									<textarea
+										name="chattext"
+										id="chat-text"
+										ng-model="input.chat"
+										class="form-control chat"
+										ng-minlength="2"
+										ng-maxlength="5"
+										maxlength = 5
+										rows="3"
+										ng-required="true" /></textarea>
+									<p ng-show="chatForm.chattext.$error.maxlength" class="help-block">Chatinlägget är för långt.</p>
+								</div>
+								<div class="col-sm-2">
+					        		<button type="button"
+					        			class="btn btn-primary"
+					        			ng-click="sendChat()"
+					        			ng-disabled="chatForm.$invalid">Skicka</button>
+								</div>
+							</div>
+						</div>
+					</ng-form>
+				</uib-tab>
+
+				<uib-tab index="1" heading="Äventyrsinlägg">
+					<ng-form name="chronicleForm">
+						<div class="form-group">
+							<label>Inlägg</label>
+							<div class="row">
+								<div class="col-sm-7">
+									<textarea
+										name="chronicle_text"
+										id="chronicle-text"
+										ng-model="input.chronicle.text"
+										class="form-control rpg"
+										ng-minlength="3"
+										ng-maxlength="2500"
+										rows="8"
+										required/></textarea>
+									<p ng-show="chronicleForm.chronicle_text.$error.minlength" class="help-block">Krönikeinlägget är för kort, eller saknas.</p>
+									<p ng-show="chronicleForm.chronicle_text.$error.maxlength" class="help-block">Krönikeinlägget är för långt.</p>
+									<button type="button" class="btn btn-primary pull-right" ng-click="newChronicleEntry()" ng-disabled="chronicleForm.$invalid">Skicka</button>
+								</div>
+								<div class="col-sm-2">
+
+									<label>Karaktär</label>
+									<ui-select ng-model="characterItem.selectedItem" theme="bootstrap">
+										<ui-select-match>
+										    <span ng-bind="$select.selected.name"></span>
+										</ui-select-match>
+										<ui-select-choices repeat="item in (myCharacters | filter: $select.search) track by item.id">
+											<img ng-src="{{ item.portrait.thumbnail }}" class="portrait" />
+										    <span ng-bind="item.name"></span>
+										</ui-select-choices>
+									</ui-select>
+									<div ng-style="{'background-image':'url({{characterItem.selectedItem.portrait.thumbnail}})'}" alt="bild" class="portrait" ng-href="/user/{{characterItem.selectedItem.id}}"></div>
+								</div>
+							</div>
+						</div>
+					</ng-form>
+				</uib-tab>
+
+				<uib-tab index="2" heading="Slå tärning">
+					<div class="form-group">
+						<label>Antal</label>
+						<input type="number" ng-model="input.dice.nr" ng-init="input.dice.nr = 1">
+
+						<label>Typ</label>
+						<select ng-model="input.dice.type" ng-init="input.dice.type = 6">
+							<option value="4">T4</option>
+							<option value="6">T6</option>
+							<option value="10">T10</option>
+							<option value="20">T20</option>
+							<option value="100">T100</option>
+						</select>
+
+						<label>Mod typ</label>
+						<select ng-model="input.dice.modtype" ng-init="input.dice.modtype = 0">
+							<option value="0">+</option>
+							<option value="1">-</option>
+						</select>
+
+						<input type="number" ng-model="input.dice.mod" ng-init="input.dice.mod = 0">
+					</div>
+
+					<div class="form-group">
+						<button class="btn btn-primary">Slå</button>
+					</div>
+				</uib-tab>
+		    </uib-tabset>
+		  </form>
+	</div>
+
+	<div id="activeUsers">
+		<label>Inloggade: </label>
+		<div>
+			<img ng-repeat="user in activeUsers" ng-src="{{user.avatar}}" class="activeUserAvatar" alt="{{user.name}}" title="{{user.name}}">
+		</div>
+	</div>
+
+</div>

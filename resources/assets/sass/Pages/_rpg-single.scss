@@ -1,0 +1,79 @@
+.portrait {
+	width: 40px;
+    height: 50px;
+    margin-right:15px;
+    background-size: cover;
+    display: inline-block;
+    //border: 2px solid #fffcfc;
+}
+.chatWrapper, .chronicleWrapper {
+	width:100%;
+	height:350px;
+	overflow: auto;
+}
+
+#chronicle{
+	width:100%;
+	height:400px;
+	background-color: #b8cccc;
+	.chronicleWrapper {
+		padding:15px;
+		height:380px;
+	}
+	.row {
+		margin-bottom: 10px;
+	}
+	.entry-chronicle {
+		margin-bottom: 10px;
+		background-color: blue;
+	}
+	.entry-chronicle-player {
+
+	}
+	.entry-chronicle-npc {
+		//background-color: red;
+	}
+	.entry-chronicle-gm{
+		background-color: rgba(199, 199, 199, 0.77);
+		padding:10px;
+		font-style: italic;
+	}
+	div.text-column {
+		padding-left:25px;
+	}
+}
+
+#chat {
+	width:100%;
+	height:400px;
+	background-color: rgba(250,250,250,0.1);
+	//padding: 10px;
+	.date {
+		font-size:60%;
+		color: grey;
+	}
+
+}
+
+#input {
+	.chat {
+		resize: none;
+
+	}
+	.rpg {
+		resize: none;
+	}
+}
+
+
+
+#activeUsers {
+	.activeUserAvatar {
+		height:100px;
+		width:100px;
+	}
+}
+
+#options {
+
+}

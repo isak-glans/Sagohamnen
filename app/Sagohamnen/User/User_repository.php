@@ -40,4 +40,9 @@ class User_repository
         return Auth::id();
     }
 
+    public function rpg_users($campaign_id)
+    {
+        return User::select("id", "name")->where('campaign_id', $campaign_id)->with('campaigns_player')->get();
+    }
+
 }

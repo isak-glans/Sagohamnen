@@ -1,7 +1,7 @@
 angular.module('ShApp')
 
 // inject the Comment service into our controller
-.controller('EditCharacterCtrl', function($scope, $location, $routeParams, CharacterFactory, config, $mdDialog ) {
+.controller('EditCharacterCtrl', function($scope, $location, $routeParams, CharacterFactory, config, $mdDialog) {
 
 	$scope.form = {};
 	$scope.portrait = {id : 0, url: ""};
@@ -13,6 +13,11 @@ angular.module('ShApp')
     	if( characterId == null) $location.path("error/404");
 
     	var theCharacter = CharacterFactory.get({id: characterId}, function(response) {
+
+    		// If character is archived then user are not allowed to edit it.
+    		if (response.can_edit == false){
+    			$location.path("error/403");
+    		}
 
     		$scope.campaignId = response.id;
 			response.created_at = new Date( response.created_at );

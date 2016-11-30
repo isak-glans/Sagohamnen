@@ -1,25 +1,53 @@
 angular.module('ShApp')
-.controller('PickPortraitCtrl', function($scope, PickPortraitService ) {
-    console.log("Ctrl lästes in.");
+.controller('PickPortraitCtrl', function($scope, PortraitService,filterFilter ) {
 
-    var init = function() {
-        console.log("Inne i pickCtrl", $scope.campaignId);
-    }
-    init();
+    $scope.list = [];
+    $scope.portraits = [];
+    $scope.selectedPortrait = {id:0, url:""};
 
+    $scope.currentPage = 1;
+    $scope.maxSize = 100;
+    $scope.bigCurrentPage = 1;
+    $scope.pageSize = 6;
 
-    /*$scope.searchPortrait = function(searchTag, pageNr) {
-        $scope.currentSearchPage = pageNr;
-        MediaService.searchPortrait(searchTag, pageNr).then(function successCallback(response) {
-            var images_per_page = response.images_per_page;
-            $scope.portraits = response.result;
-            $scope.portraits_counted = response.nr_results;
-            $scope.portraits_nrPages = Math.ceil(response.nr_results / images_per_page);
-            $scope.maxSearchPage = $scope.portraits_nrPages;
-        }, function errorCallback(response) {
-            $location.path("error/500");
-        });
+    $scope.init = function () {
+        fetchPortraits();
     };
+
+    var fetchPortraits = function(){
+
+        // If no portraits JSON loaded
+        if(PortraitService.all_portraits.length == 0){
+            console.log("Hämta!");
+            // Fetch JSOn from service.
+            PortraitService.fetchPortraits().then(function(){
+                $scope.portraits = PortraitService.all_portraits;
+                PortraitService.setPortraits = $scope.portraits;
+                console.log($scope.portraits);
+                setDefaultPreview()
+            });
+        } else {
+            console.log("Finns redan!");
+            // Add JSON to scope.
+            $scope.portraits = PortraitService.all_portraits;
+            setDefaultPreview();
+        }
+    }
+
+    var setDefaultPreview = function(){
+        $scope.selectedPortrait.id = $scope.portraits[0].id;
+        $scope.selectedPortrait.url = $scope.portraits[0].medium;
+    }
+
+    // This comparison function is used to show
+    // all portraits, even if search is empty.
+    // http://stackoverflow.com/questions/21199759/angularjs-filter-comparator-true-while-displaying-ng-repeat-list-when-input-fiel
+    $scope.exceptEmptyComparator = function (actual, expected) {
+        if (!expected) {
+           return true;
+        }
+        return angular.equals(expected, actual);
+    }
 
     $scope.selectPortrait = function(portrait)
     {
@@ -30,12 +58,17 @@ angular.module('ShApp')
         }
     }
 
-    $scope.setDefaultPortrait = function()
+    $scope.selectImg = function(thePortrait)
     {
-        $scope.current_portrait = $scope.default_portrait;
+        $scope.selectedPortrait.id = thePortrait.id;
+        $scope.selectedPortrait.url = thePortrait.medium;
     }
 
-    $scope.repeatXTimes = function(n){
-         return new Array(n);
-    };*/
+    $scope.pickImg = function()
+    {
+        $scope.portrait.id  = $scope.selectedPortrait.id;
+        $scope.portrait.url = $scope.selectedPortrait.url;
+    }
+
+
 });

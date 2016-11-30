@@ -8,6 +8,7 @@ use Auth;
 use App\User;
 use Sagohamnen\User\User_BL;
 use Sagohamnen\User\User_repository;
+use Sagohamnen\character\character_repository;
 
 
 class UserController extends ApiController
@@ -90,6 +91,8 @@ class UserController extends ApiController
 
         return $this->respond(true);
     }
+
+
 
     public function destroy($id){
     }

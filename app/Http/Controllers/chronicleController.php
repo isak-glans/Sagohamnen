@@ -41,7 +41,21 @@ class chronicleController extends ApiController
 
 	public function store(Request $request)
     {
+    	try {
 
+    		$this->validate($request, [
+	            'text'          => 'required|min:3|max:2500',
+	            'campaign_id'   => 'required|numeric',
+	            'character_id' 	=> 'required|numeric'
+	        ]);
+
+			$result = $this->BL->store($request);
+			if($result == false) return $this->respondNotAuthorized();
+			return $this->respond($result);
+		} catch (Exception $e)
+		{
+			return $this->respondWithError($e);
+		}
     }
 
     public function update(Request $request, $id)

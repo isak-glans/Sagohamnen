@@ -111,4 +111,6 @@ class CharacterController extends ApiController
         return $this->respond(array("result"=>"Funkar", 'id'=>$id, 'status' => $status));
     }
 
+
+
 }

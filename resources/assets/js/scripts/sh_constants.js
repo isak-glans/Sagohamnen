@@ -7,4 +7,9 @@ sagohamnenApp.constant('config', {
     charStatusBlocked               :5,
     campaginArchived                :0,
     campaginActive                  :1,
+
+    rpgChatStyleMessage				:0,
+    rpgChatStyleDie					:1,
+
+
 });

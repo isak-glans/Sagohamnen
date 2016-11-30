@@ -1,10 +1,8 @@
 <?php
 return [
-	'campaign_user_status_none' 		=> 0,
-	'campaign_user_status_applying' 	=> 1,
-	'campaign_user_status_playing' 		=> 2,
-	'campaign_user_status_gamemaster' 	=> 3,
-	'campaign_user_status_blocked' 		=> 4,
+	'user_status_deleted'				=>0,
+	'user_status_active'				=>1,
+	'user_status_admin'					=>2,
 
 	'character_status_archived'			=> 0,
 	'character_status_applying'			=> 1,
@@ -16,6 +14,8 @@ return [
 	'campaign_status_archived'			=> 0,
 	'campaign_status_active'			=> 1,
 	'max_nr_campaigns_as_gamemaster'	=> 2,
+
+	'max_nr_characters_in_campaign'		=> 1,
 
 	'apa' => env('FB_REDIRECT_DEV'),
 ];

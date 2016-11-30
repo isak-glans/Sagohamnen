@@ -61,9 +61,19 @@ class Character_repository
 		return Character::select('id', 'name', 'user_id', 'campaign_id', 'status')->with('campaign')->where('id', $id)->first();
 	}
 
+	public function find_in_campaign($id, $campaign_id)
+	{
+		return Character::select('id', 'name', 'user_id', 'campaign_id', 'status')->where(['id' => $id, 'campaign_id' => $campaign_id])->first();
+	}
+
 	public function playing_or_applying_in_campaign($campaign_id)
 	{
 		return Character::select('id','name', 'status', 'portrait_id')->where('campaign_id', $campaign_id)->whereIn('status', [$this->char_status_applying, $this->char_status_playing])->with('portrait')->get();
+	}
+
+	public function playing_or_npc_in_campaign($campaign_id)
+	{
+		return Character::select('id','name', 'status', 'portrait_id')->where('campaign_id', $campaign_id)->whereIn('status', [config('sh.character_status_playing'), config('sh.character_status_npc') ])->get();
 	}
 
 	public function owned_by_user_in_campaign($campaign_id, $user_id)
@@ -74,8 +84,16 @@ class Character_repository
 	public function count_mine_playing_in_campaign($user_id, $campaign_id)
 	{
 		return Character::where(['campaign_id' => $campaign_id, 'user_id' => $user_id, 'status' =>$this->char_status_player])->count();
+	}
 
-		/*return Campaign_user::where(['campaign_id' => $campaign_id, 'status' => $this->status_player ])->count();*/
+	public function count_mine_playing_or_npc_in_campaign($user_id, $campaign_id)
+	{
+		return Character::where(['campaign_id' => $campaign_id, 'user_id' => $user_id])->whereIn('status', [ config('sh.character_status_playing'), config('sh.character_status_npc')])->count() >= 1;
+	}
+
+	public function count_mine_not_archived($user_id, $campaign_id)
+	{
+		return Character::where(['campaign_id' => $campaign_id, 'user_id' => $user_id])->whereIn('status', [$this->char_status_applying, $this->char_status_playing])->count();
 	}
 
 	public function count_campaigns_i_am_playing($user_id)
@@ -101,5 +119,10 @@ class Character_repository
             ->update(['status' => $new_campaign_user_status,
             	'updated_at' => date("Y-m-d H:i:s")]);
         });
+	}
+
+	public function users_playing_in_campaign($campaign_id)
+	{
+		return Character::select('user_id')->where(['campaign_id' => $campaign_id, 'status' => $this->char_status_playing])->with('user_avatars')->groupBy('user_id')->get();
 	}
 }

@@ -42,14 +42,16 @@
 		</div>
 	</div>
 
-	<div id="pageAlternative" ng-show="form.can_apply || form.can_edit">
+	<div id="pageAlternative" ng-show="form.can_apply || form.i_am_gm || form.i_am_player">
 		<button class="btn btn-default alternative" ng-click="showAlt()" title="Alternativ"><span class="glyphicon glyphicon-cog"></span></button>
 		<span ng-show="showAlternatives">
 			<button ng-show="form.archived" ng-click="activateCampaign()" class="btn btn-default"><span class="glyphicon glyphicon-open-file"></span> Aktivera</button>
 			<button ng-show="form.can_apply && !form.archived" ng-click="applyToCampaign()" class="btn btn-default"><span class="glyphicon glyphicon-user"></span> Ansök</button>
-			<button ng-show="form.can_edit && !form.archived" ng-click="edit()" class="btn btn-default"><span class="glyphicon glyphicon-pencil"></span> Redigera</button>
-			<button ng-show="form.can_edit && !form.archived" ng-click="handleApplicants()" class="btn btn-default"><span class="glyphicon glyphicon-user"></span> Hantera ansökningar</button>
+			<button ng-show="form.i_am_gm && !form.archived" ng-click="edit()" class="btn btn-default"><span class="glyphicon glyphicon-pencil"></span> Redigera</button>
+			<button ng-show="form.i_am_gm && !form.archived" ng-click="handleApplicants()" class="btn btn-default"><span class="glyphicon glyphicon-user"></span> Hantera ansökningar</button>
+
 		</span>
+		<button go-click="/rpg/{{form.id}}" ng-show="form.i_am_gm || form.i_am_player" class="btn btn-primary"><i class="fa fa-weixin" aria-hidden="true"></i> Spelchatt</button>
 	</div>
 
 </div>

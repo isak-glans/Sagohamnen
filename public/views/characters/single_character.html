@@ -43,12 +43,12 @@
 		<p ng-bind-html="form.secret_data | show_linebreaks" ></p>
 	</div>
 
-	<button class="btn btn-default" ng-show="form.can_edit" ng-click="showAlt()" title="Alternativ"><span class="glyphicon glyphicon-cog"></span></button>
+	<button class="btn btn-default" ng-show="form.can_edit || form.can_reactivate" ng-click="showAlt()" title="Alternativ"><span class="glyphicon glyphicon-cog"></span></button>
 	<span ng-show="showAlternatives">
 
 		<a ng-show="archived == false" class="btn btn-default" ng-href="#/edit_character/{{form.id}}"><span class="glyphicon glyphicon-pencil"></span> Redigera</a>
 
-		<button ng-show="archived" type="button" ng-click="setApplier()" class="btn btn-default"><span class="glyphicon glyphicon-share-alt"></span> Sätt som ansökande</button>
+		<button ng-show="archived && form.can_reactivate" type="button" ng-click="setApplier()" class="btn btn-default"><span class="glyphicon glyphicon-share-alt"></span> Sätt som ansökande</button>
 	</span>
 
 </div>
