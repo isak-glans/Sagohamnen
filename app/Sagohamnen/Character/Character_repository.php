@@ -24,7 +24,7 @@ class Character_repository
 
 	public function single_character($id)
 	{
-		return Character::select('*')->where('id',$id)->whereNotIn('status', [$this->char_status_erased])->with('portrait', 'User', 'campaign')->first();
+		return Character::select('*')->where('id', $id)->whereNotIn('status', [ config('sh.character_status_erased') ])->with('portrait', 'User', 'campaign')->first();
 	}
 
 	public function store_character($formdata, $my_id)

@@ -80,7 +80,6 @@ class PortraitController extends ApiController
 
     public function portraits()
     {
-        sleep(5);
         // Return all portraits with tags as a json file.
         try {
             $data = $this->portrait_BL->portraits_with_tags();

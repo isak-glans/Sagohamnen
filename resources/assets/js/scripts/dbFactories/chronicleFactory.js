@@ -4,6 +4,7 @@ angular.module('ShApp')
     function($resource) {
         //return $resource('/api/campagin/:campaign_id');
         return $resource('/api/chronicle/:id', {}, {
+        	/*save: { method: 'POST' , isArray: false},*/
         });
     }
 

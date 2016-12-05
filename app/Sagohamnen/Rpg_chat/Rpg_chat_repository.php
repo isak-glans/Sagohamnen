@@ -5,6 +5,8 @@ use Sagohamnen\Chronicle\chronicle;
 use Sagohamnen\Campaign\Campaign;
 use App\User;
 
+use Carbon\Carbon;
+
 class Rpg_chat_repository
 {
 
@@ -30,6 +32,7 @@ class Rpg_chat_repository
 		$new_chat->user_id 		= $user_id;
 		$new_chat->text 		= $text;
 		$new_chat->type 		= $type;
+		$new_chat->created_at 	= Carbon::now();
 		$new_chat->save();
 	}
 

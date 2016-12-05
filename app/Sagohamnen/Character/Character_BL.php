@@ -33,18 +33,19 @@ class Character_BL
 		// Get data
 		$result = $this->char_rep->single_character($id);
 		if($result === null) return "not_found";
-		if (isset($result->user_id) === false ) return false;
+		//if (isset($result->user_id) === false ) return false;
 
-		// Can user edit it?
 		$my_id 	= $this->user_rep->my_id();
-		$result->i_am_gm = $my_id == $result->campaign->user_id;
-		// If you dont own character, dont show secret data.
+		// Can user edit character?
 		if ($my_id === null ) {
+			// If you dont own character, dont show secret data.
 			$result->secret_data = null;
 			$result->can_edit = false;
+			$result->i_am_gm = false;
 		} else {
 			// Is this my character?
 			$result->can_edit = $result->user_id == $my_id;
+			$result->i_am_gm = $my_id == $result->campaign->user_id;
 			//$result->secret_data = $result->can_edit;
 		}
 

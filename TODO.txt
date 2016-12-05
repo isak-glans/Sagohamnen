@@ -3,9 +3,13 @@ Inloggning
 
 RPG rummet
 
-	Visa en laddningsanimering om en sida dröjer innan resolve är klart.
+	Slå tärningar.
+		- Töm beskrivning om slagit.
+		- Lägg in en fördröjning så användare inte kan spamma "Slå tärnings"-knappen.
+		- Tärningsslagen och chattinlägg dyker ibland upp väldigt långsamt.
+		- Gör också OB tärningarslag.
 
-	Töm krönikeinput efter att man skickat ett inlägg.
+	Se över testet singleChar. Den kräver att man är inloggad för att komma åt json resultatet..
 
 	Se till att controllern väntar på requesten: setupData, och userservice.loaduser,
 	innan den "kör igång".

@@ -6,7 +6,11 @@ angular.module('ShApp')
 	//factory.portraits = [];
 	factory.onlineUsersId = [];
 	factory.onlineUsers = [];
-	factory.users = [];
+	factory.users = {
+        online : [],
+        onlineIDs : [],
+        all : [],
+    }
 	factory.characters = [];
 	factory.portraits = [];
 	factory.info = {
@@ -18,6 +22,10 @@ angular.module('ShApp')
 		lastReadChronicleId	: 0,
 		campaignId 		: 0,
 		gmId			: 0,
+		chronicleError	: ""
+	}
+	factory.messages = {
+		spamingChronicle  : "Var god och vänta med att skriva inlägg tills dess en annan spelare gjort ett."
 	}
 	var timerId = 0;
 
@@ -27,18 +35,18 @@ angular.module('ShApp')
 		factory.info.updateDelay = 3000;
 		factory.info.lastReadChatId = 0;
 		factory.info.lastReadChronicleId = 0;
+
 		// Store importent info.
 		factory.info.campaignId = setupData.campaign.id;
 		factory.info.gmId		= setupData.campaign.user_id;
-		factory.users 			= setupData.users;
 		factory.characters 		= setupData.characters;
 
-		console.log("Porträtt", PortraitService.all_portraits);
+		// Save data about all users who play or are GM,
+		// and store in the service.
+		factory.users.all = setupData.users;
 
-		// Fetch the portraits.
+		// Fetch the portraits for characters.
 		giveCharactersPortraits(factory.characters);
-
-
 
 		// Run the shit!
 		chatLoop();
@@ -69,8 +77,10 @@ angular.module('ShApp')
 		var campaignId = factory.info.campaignId;
 
 		// Fetch updates.
-		RpgChatFactory.newestChats({'campaignId': campaignId,
-			'chatId' : lastReadChatId, 'chronicleId': lastRecievedChronicleId }).$promise.then(function(response){
+		RpgChatFactory.newestChats({
+			'campaignId'	: campaignId,
+			'chatId' 		: lastReadChatId,
+			'chronicleId'	: lastRecievedChronicleId }).$promise.then(function(response){
 			callback_Updates(response);
 		}, function(error) {
 			console.log(error);
@@ -86,21 +96,47 @@ angular.module('ShApp')
 
 	factory.storeChronicle = function(message, characterId) {
 		factory.info.updateCounter = 0;
+		factory.info.chronicleError = "";
+
 		var chronicle = new ChronicleFactory;
 		chronicle.text 			= message;
 		chronicle.campaign_id 	= factory.info.campaignId;
 		chronicle.character_id 	= characterId;
-		chronicle.$save();
-		console.log("Sparar");
+
+		return chronicle.$save();
 	}
 
 	factory.storeDie = function(message, campaignId, type) {
 		//toreRpgChat(message, campaignId, config.rpgChatStyleDie);
+
+		//RpgChatFactory.storeDices(['campaignId' => campaignId]);
+
 	}
 
 	factory.stopPulling = function(){
 		clearInterval(timerId);
 	}
+
+	factory.roleOrdinaryDices = function(nr, type, modType, mod, description){
+		var campaignId = factory.info.campaignId;
+    	var chatDices = new RpgChatFactory;
+    	chatDices.campaign_id 	= campaignId;
+    	chatDices.dice_nr 		= nr;
+    	chatDices.dice_type 	= type;
+    	chatDices.dice_mod_type = modType;
+    	chatDices.dice_mod 		= mod;
+    	chatDices.dice_description = description;
+    	RpgChatFactory.storeDices({}, chatDices).$promise.then(function(res) {
+    		console.log(res);
+    	});
+
+    	/*'campaign_id'        => 'required|numeric|min:1',
+            'dice_nr'            => 'required|numeric|min:1|max:100',
+            'dice_type'          => 'required|numeric|min:4|max:100',
+            'dice_mod_type'      => 'required|numeric|min:0|max:1',
+            'dice_mod'           => 'required|numeric|min:0|max:1000',
+            'dice_description'*/
+    }
 
 	// ===================================
 	// PRIVATE FUNCTIONS
@@ -114,22 +150,20 @@ angular.module('ShApp')
 		// Last chat and chronicle id:s
 		var latestChatId = response.newest_chats.last_chat_id;
 		var latestChronicleId = response.newest_chronicles.last_chronicle_id;
+		var currentOnlineUsers = [];
 
 		// Active users
 		var currentOnlineUsersId = response.active_users;
+		// See if new users have come online, or someone left.
 		var onlineUsersChanged = simpleArraysEqual(factory.onlineUsersId, currentOnlineUsersId) == true ? false : true;
 
+		// Update online users
 		if( onlineUsersChanged ){
-			var currentOnlineUsers = [];
-
 			// Iterate and add name and avatar to list.
 			currentOnlineUsersId.forEach(function(userId){
 				var data = findUser(userId);
 				currentOnlineUsers.push({'id' : userId, 'name': data.name, 'avatar' : data.avatar});
 			});
-
-			factory.onlineUsers 	= currentOnlineUsers;
-			factory.onlineUsersId 	= currentOnlineUsersId;
 		}
 
 		// If new chronicles
@@ -138,9 +172,10 @@ angular.module('ShApp')
 			// Remember if new chronicles arrived.
 			factory.info.lastReadChronicleId = latestChronicleId;
 
-			// Fetch new chronicles.
+			// The new chronicles.
 			newChronicles = response.newest_chronicles.chronicles;
-
+			// Since DB sort by descending order, reverse it
+			// so last entry comes at bottom.
 			newChronicles.reverse();
 
 			// Attach info.
@@ -166,8 +201,6 @@ angular.module('ShApp')
 				// Find user
 				row.name = findUser(row.user_id).name;
 			});
-
-			console.log("karaktärs", newChronicles);
 		}
 
 		// If new chats.
@@ -204,7 +237,7 @@ angular.module('ShApp')
 			'newChats'			: newChats,
 			'newDices' 			: newDices,
 			'newChronicles' 	: newChronicles,
-			'activeUsers' 		: factory.onlineUsers,
+			'activeUsers' 		: currentOnlineUsers,
 			'onlineUsersChanged' : onlineUsersChanged });
 	}
 
@@ -253,7 +286,7 @@ angular.module('ShApp')
     var findUser = function(userId)
     {
     	var data = {'name' : '', 'avatar' : ''};
-    	factory.users.forEach(function(user){
+    	factory.users.all.forEach(function(user){
     		if (user.id == userId) {
     			data.name = user.name;
     			data.avatar = user.avatar;
@@ -262,6 +295,8 @@ angular.module('ShApp')
     	return data;
     }
 
+    // Compare two arrays to see if they
+    // have the same content.
     var simpleArraysEqual = function (array1, array2)
     {
     	var ok = true;
@@ -310,6 +345,9 @@ angular.module('ShApp')
     var meGm = function(){
     	return factory.info.gmId == UserService.currentUser.id;
     }
+
+
+
 	return factory;
 
 });

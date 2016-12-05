@@ -182,12 +182,6 @@ angular.module('ShApp').filter('reverse', function() {
     return items.slice().reverse();
   };
 });
-
-
-function helloWorld(a,b) {
-
-	return a + b;
-}
 sagohamnenApp.constant('config', {
     charStatusArchived              :0,
     charStatusApplying              :1,
@@ -201,7 +195,7 @@ sagohamnenApp.constant('config', {
     rpgChatStyleMessage				:0,
     rpgChatStyleDie					:1,
 
-
+    maxChroniclesInRow              :10,
 });
 angular.module('ShApp')
 
@@ -284,6 +278,7 @@ angular.module('ShApp')
     function($resource) {
         //return $resource('/api/campagin/:campaign_id');
         return $resource('/api/chronicle/:id', {}, {
+        	/*save: { method: 'POST' , isArray: false},*/
         });
     }
 
@@ -303,7 +298,8 @@ angular.module('ShApp')
 .factory('RpgChatFactory', ['$resource',
     function($resource) {
         return $resource('/api/rpg_chat/:campaignId', {}, {
-        	newestChats : { method : "GET", url : "/api/rpg_update/:campaignId/newest/:chatId/:chronicleId" }
+        	newestChats : { method : "GET", url : "/api/rpg_update/:campaignId/newest/:chatId/:chronicleId" },
+        	storeDices : { method: "POST", url : "/api/rpg/role_dice"}
         });
     }
 ]);
@@ -349,6 +345,11 @@ angular.module('ShApp')
 
     return result;
 });
+// This directive will communicate with the index.php
+// and show a loader icon when Angular Route are waiting
+// for a resolver to finish. This way the user wont be
+// confused if nothing happens while page is loading.
+
 angular.module('ShApp')
 .directive('routeLoadingIndicator', function($rootScope, $route, $timeout) {
   return {
@@ -358,50 +359,16 @@ angular.module('ShApp')
     link: function(scope, element) {
 
       $rootScope.$on('$routeChangeStart', function(event, currentRoute, previousRoute) {
-        console.log("Nu laddas en route.");
         scope.isRouteLoading = true;
-
-        if (previousRoute) return;
-
-        $timeout(function() {
-          element.removeClass('ng-hide');
-        });
       });
 
       $rootScope.$on('$routeChangeSuccess', function() {
-        element.addClass('ng-hide');
         scope.isRouteLoading = false;
       });
     }
   };
 });
 
-
-
-/*var routeLoadingIndicator = function($rootScope, $route, $timeout){
-  return {
-    restrict:'E',
-    template:"<h1 ng-if='isRouteLoading'>Loading...</h1>",
-    link:function(scope, elem, attrs){
-      scope.isRouteLoading = true;
-
-      console.log("Inne i routerLoeaderDir");
-
-      $rootScope.$on('$routeChangeStart', function(){
-        scope.isRouteLoading = true;
-        console.log("Nu laddas en route.");
-      });
-
-      $rootScope.$on('$routeChangeSuccess', function(){
-        scope.isRouteLoading = false;
-        console.log("Nu har en route laddats klart.");
-      });
-
-
-
-    }
-  };
-};*/
 
 angular.module('ShApp')
 
@@ -628,7 +595,11 @@ angular.module('ShApp')
 	//factory.portraits = [];
 	factory.onlineUsersId = [];
 	factory.onlineUsers = [];
-	factory.users = [];
+	factory.users = {
+        online : [],
+        onlineIDs : [],
+        all : [],
+    }
 	factory.characters = [];
 	factory.portraits = [];
 	factory.info = {
@@ -640,6 +611,10 @@ angular.module('ShApp')
 		lastReadChronicleId	: 0,
 		campaignId 		: 0,
 		gmId			: 0,
+		chronicleError	: ""
+	}
+	factory.messages = {
+		spamingChronicle  : "Var god och vänta med att skriva inlägg tills dess en annan spelare gjort ett."
 	}
 	var timerId = 0;
 
@@ -649,18 +624,18 @@ angular.module('ShApp')
 		factory.info.updateDelay = 3000;
 		factory.info.lastReadChatId = 0;
 		factory.info.lastReadChronicleId = 0;
+
 		// Store importent info.
 		factory.info.campaignId = setupData.campaign.id;
 		factory.info.gmId		= setupData.campaign.user_id;
-		factory.users 			= setupData.users;
 		factory.characters 		= setupData.characters;
 
-		console.log("Porträtt", PortraitService.all_portraits);
+		// Save data about all users who play or are GM,
+		// and store in the service.
+		factory.users.all = setupData.users;
 
-		// Fetch the portraits.
+		// Fetch the portraits for characters.
 		giveCharactersPortraits(factory.characters);
-
-
 
 		// Run the shit!
 		chatLoop();
@@ -691,8 +666,10 @@ angular.module('ShApp')
 		var campaignId = factory.info.campaignId;
 
 		// Fetch updates.
-		RpgChatFactory.newestChats({'campaignId': campaignId,
-			'chatId' : lastReadChatId, 'chronicleId': lastRecievedChronicleId }).$promise.then(function(response){
+		RpgChatFactory.newestChats({
+			'campaignId'	: campaignId,
+			'chatId' 		: lastReadChatId,
+			'chronicleId'	: lastRecievedChronicleId }).$promise.then(function(response){
 			callback_Updates(response);
 		}, function(error) {
 			console.log(error);
@@ -708,21 +685,47 @@ angular.module('ShApp')
 
 	factory.storeChronicle = function(message, characterId) {
 		factory.info.updateCounter = 0;
+		factory.info.chronicleError = "";
+
 		var chronicle = new ChronicleFactory;
 		chronicle.text 			= message;
 		chronicle.campaign_id 	= factory.info.campaignId;
 		chronicle.character_id 	= characterId;
-		chronicle.$save();
-		console.log("Sparar");
+
+		return chronicle.$save();
 	}
 
 	factory.storeDie = function(message, campaignId, type) {
 		//toreRpgChat(message, campaignId, config.rpgChatStyleDie);
+
+		//RpgChatFactory.storeDices(['campaignId' => campaignId]);
+
 	}
 
 	factory.stopPulling = function(){
 		clearInterval(timerId);
 	}
+
+	factory.roleOrdinaryDices = function(nr, type, modType, mod, description){
+		var campaignId = factory.info.campaignId;
+    	var chatDices = new RpgChatFactory;
+    	chatDices.campaign_id 	= campaignId;
+    	chatDices.dice_nr 		= nr;
+    	chatDices.dice_type 	= type;
+    	chatDices.dice_mod_type = modType;
+    	chatDices.dice_mod 		= mod;
+    	chatDices.dice_description = description;
+    	RpgChatFactory.storeDices({}, chatDices).$promise.then(function(res) {
+    		console.log(res);
+    	});
+
+    	/*'campaign_id'        => 'required|numeric|min:1',
+            'dice_nr'            => 'required|numeric|min:1|max:100',
+            'dice_type'          => 'required|numeric|min:4|max:100',
+            'dice_mod_type'      => 'required|numeric|min:0|max:1',
+            'dice_mod'           => 'required|numeric|min:0|max:1000',
+            'dice_description'*/
+    }
 
 	// ===================================
 	// PRIVATE FUNCTIONS
@@ -736,22 +739,20 @@ angular.module('ShApp')
 		// Last chat and chronicle id:s
 		var latestChatId = response.newest_chats.last_chat_id;
 		var latestChronicleId = response.newest_chronicles.last_chronicle_id;
+		var currentOnlineUsers = [];
 
 		// Active users
 		var currentOnlineUsersId = response.active_users;
+		// See if new users have come online, or someone left.
 		var onlineUsersChanged = simpleArraysEqual(factory.onlineUsersId, currentOnlineUsersId) == true ? false : true;
 
+		// Update online users
 		if( onlineUsersChanged ){
-			var currentOnlineUsers = [];
-
 			// Iterate and add name and avatar to list.
 			currentOnlineUsersId.forEach(function(userId){
 				var data = findUser(userId);
 				currentOnlineUsers.push({'id' : userId, 'name': data.name, 'avatar' : data.avatar});
 			});
-
-			factory.onlineUsers 	= currentOnlineUsers;
-			factory.onlineUsersId 	= currentOnlineUsersId;
 		}
 
 		// If new chronicles
@@ -760,9 +761,10 @@ angular.module('ShApp')
 			// Remember if new chronicles arrived.
 			factory.info.lastReadChronicleId = latestChronicleId;
 
-			// Fetch new chronicles.
+			// The new chronicles.
 			newChronicles = response.newest_chronicles.chronicles;
-
+			// Since DB sort by descending order, reverse it
+			// so last entry comes at bottom.
 			newChronicles.reverse();
 
 			// Attach info.
@@ -788,8 +790,6 @@ angular.module('ShApp')
 				// Find user
 				row.name = findUser(row.user_id).name;
 			});
-
-			console.log("karaktärs", newChronicles);
 		}
 
 		// If new chats.
@@ -826,7 +826,7 @@ angular.module('ShApp')
 			'newChats'			: newChats,
 			'newDices' 			: newDices,
 			'newChronicles' 	: newChronicles,
-			'activeUsers' 		: factory.onlineUsers,
+			'activeUsers' 		: currentOnlineUsers,
 			'onlineUsersChanged' : onlineUsersChanged });
 	}
 
@@ -875,7 +875,7 @@ angular.module('ShApp')
     var findUser = function(userId)
     {
     	var data = {'name' : '', 'avatar' : ''};
-    	factory.users.forEach(function(user){
+    	factory.users.all.forEach(function(user){
     		if (user.id == userId) {
     			data.name = user.name;
     			data.avatar = user.avatar;
@@ -884,6 +884,8 @@ angular.module('ShApp')
     	return data;
     }
 
+    // Compare two arrays to see if they
+    // have the same content.
     var simpleArraysEqual = function (array1, array2)
     {
     	var ok = true;
@@ -932,6 +934,9 @@ angular.module('ShApp')
     var meGm = function(){
     	return factory.info.gmId == UserService.currentUser.id;
     }
+
+
+
 	return factory;
 
 });
@@ -1497,6 +1502,7 @@ angular.module('ShApp')
     $scope.chats = [];
     $scope.dices = [];
     $scope.chronicles = [];
+    $scope.chronicleError = "";
     $scope.activeUsers;
     $scope.myCharacters = [];
     $scope.input = {chat:"", chronicle:""};
@@ -1506,6 +1512,7 @@ angular.module('ShApp')
     $scope.characterItem = {};
 
 	$scope.init = function(){
+        console.log("Nu körs init.");
         var campaign = setupData.campaign;
         $scope.campaginData = campaign;
 
@@ -1516,28 +1523,16 @@ angular.module('ShApp')
         // Iniate the RPG service.
         RpgService.init(setupData);
 
+        $scope.activUsers = setupData.users;
+
         // Fetch those characters that are mine.
         $scope.myCharacters = RpgService.myCharacters();
 
+        // Set selected character.
         if ($scope.myCharacters.length > 0)
         {
             $scope.characterItem.selectedItem = $scope.myCharacters[0];
         }
-
-
-        /*UserService.userLoaded.then(function(res){
-            console.log("Nu har userservice hämtat användar id.");
-
-            setTimeout(function(){
-                $scope.myCharacters = RpgService.myCharacters();
-                if ($scope.myCharacters.length > 0)
-                {
-                    console.log($scope.myCharacters[0]);
-                    console.log($scope.myCharacters[0].portrait.thumbnail );
-                    $scope.myCurrentCharacters = $scope.myCharacters[0];
-                }
-            },1000);
-        });*/
 
 	}
 
@@ -1551,23 +1546,33 @@ angular.module('ShApp')
         RpgService.storeChat(message,campaignId);
     }
 
-    $scope.newChronicleEntry = function()
+    $scope.saveChronicleEntry = function()
     {
         var chroEntry = $scope.input.chronicle.text;
         var pickedChar = $scope.characterItem.selectedItem;
 
         // If no character picked
-        if (pickedChar == 0) pickedChar =null;
+        if (pickedChar == 0) pickedChar = null;
 
-        console.log("Chro entry", chroEntry);
-        console.log("Spara krönikeinlägg", pickedChar.id);
+        RpgService.storeChronicle(chroEntry, pickedChar.id).then(function(response){
 
-        RpgService.storeChronicle(chroEntry, pickedChar.id);
+            // Check if user is spamming.
+            if (response.stored_id == null){
+                // User is spamming.
+                $scope.chronicleError = RpgService.messages.spamingChronicle;
+            } else {
+                // Not spamming.
+                $scope.chronicleError = "";
+                $scope.input.chronicle.text = "";
+                RpgService.getNewest();
+            }
 
-        // Reset textarea.
-        $scope.input.chronicle.text = "";
+        }).catch( function(error){
+            console.log(error);
+        });
     }
 
+    // Event watcher. Calls when chat should be updated.
     $scope.$on('rpgUpdate', function(event, response){
         // If new dices
         if (response.newDices.length > 0) {
@@ -1597,10 +1602,34 @@ angular.module('ShApp')
 
     });
 
+    $scope.$on('newChronicle', function(event,response){
+        // If new chronicles.
+        if (!! response.newChronicle) {
+            $scope.chronicles.push(response.newChronicle);
+
+        }
+    });
+
+    // When user leaves chat.
     $scope.$on("$destroy", function(){
         console.log("Lämnar rpg.");
         RpgService.stopPulling();
     });
+
+    $scope.roleDices = function(){
+        console.log("Nu ska det slåss tärningar!");
+
+        var nrOfDices   = $scope.input.dice.nr;
+        var diceType    = $scope.input.dice.type;
+        var diceModType = $scope.input.dice.modtype;
+        var diceMod     = $scope.input.dice.mod;
+        var diceMotivation  = $scope.input.dice.description;
+
+        console.log("Nr " +nrOfDices+ " Type:" + diceType+ " Mod type: " +diceModType+ " Mod: " +diceMod + ", motivering: "+diceMotivation);
+
+        RpgService.roleOrdinaryDices(nrOfDices,diceType,diceModType,diceMod,diceMotivation);
+
+    }
 
 });
 

@@ -42,6 +42,7 @@ Route::group(['prefix' => 'api/', 'middleware' => 'auth'], function () {
 	Route::resource('chronicle', 'chronicleController', ['only' => ['store', 'update', 'edit']]);
 	Route::get('rpg_update/{campaign_id}/newest/{chat_id}/{chronicle_id}', 'RpgController@rpg_update');
 	Route::get('setup_rpg/{campaign_id}', 'RpgController@rpg_setup');
+	Route::post('rpg/role_dice', 'RpgChatController@storeDiceRole');
 });
 
 // Route::get('/redirect', 'SocialAuthController@redirect');

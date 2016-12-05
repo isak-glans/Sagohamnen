@@ -4,6 +4,7 @@ angular.module('ShApp')
     $scope.chats = [];
     $scope.dices = [];
     $scope.chronicles = [];
+    $scope.chronicleError = "";
     $scope.activeUsers;
     $scope.myCharacters = [];
     $scope.input = {chat:"", chronicle:""};
@@ -13,6 +14,7 @@ angular.module('ShApp')
     $scope.characterItem = {};
 
 	$scope.init = function(){
+        console.log("Nu körs init.");
         var campaign = setupData.campaign;
         $scope.campaginData = campaign;
 
@@ -23,28 +25,16 @@ angular.module('ShApp')
         // Iniate the RPG service.
         RpgService.init(setupData);
 
+        $scope.activUsers = setupData.users;
+
         // Fetch those characters that are mine.
         $scope.myCharacters = RpgService.myCharacters();
 
+        // Set selected character.
         if ($scope.myCharacters.length > 0)
         {
             $scope.characterItem.selectedItem = $scope.myCharacters[0];
         }
-
-
-        /*UserService.userLoaded.then(function(res){
-            console.log("Nu har userservice hämtat användar id.");
-
-            setTimeout(function(){
-                $scope.myCharacters = RpgService.myCharacters();
-                if ($scope.myCharacters.length > 0)
-                {
-                    console.log($scope.myCharacters[0]);
-                    console.log($scope.myCharacters[0].portrait.thumbnail );
-                    $scope.myCurrentCharacters = $scope.myCharacters[0];
-                }
-            },1000);
-        });*/
 
 	}
 
@@ -58,23 +48,33 @@ angular.module('ShApp')
         RpgService.storeChat(message,campaignId);
     }
 
-    $scope.newChronicleEntry = function()
+    $scope.saveChronicleEntry = function()
     {
         var chroEntry = $scope.input.chronicle.text;
         var pickedChar = $scope.characterItem.selectedItem;
 
         // If no character picked
-        if (pickedChar == 0) pickedChar =null;
+        if (pickedChar == 0) pickedChar = null;
 
-        console.log("Chro entry", chroEntry);
-        console.log("Spara krönikeinlägg", pickedChar.id);
+        RpgService.storeChronicle(chroEntry, pickedChar.id).then(function(response){
 
-        RpgService.storeChronicle(chroEntry, pickedChar.id);
+            // Check if user is spamming.
+            if (response.stored_id == null){
+                // User is spamming.
+                $scope.chronicleError = RpgService.messages.spamingChronicle;
+            } else {
+                // Not spamming.
+                $scope.chronicleError = "";
+                $scope.input.chronicle.text = "";
+                RpgService.getNewest();
+            }
 
-        // Reset textarea.
-        $scope.input.chronicle.text = "";
+        }).catch( function(error){
+            console.log(error);
+        });
     }
 
+    // Event watcher. Calls when chat should be updated.
     $scope.$on('rpgUpdate', function(event, response){
         // If new dices
         if (response.newDices.length > 0) {
@@ -104,10 +104,34 @@ angular.module('ShApp')
 
     });
 
+    $scope.$on('newChronicle', function(event,response){
+        // If new chronicles.
+        if (!! response.newChronicle) {
+            $scope.chronicles.push(response.newChronicle);
+
+        }
+    });
+
+    // When user leaves chat.
     $scope.$on("$destroy", function(){
         console.log("Lämnar rpg.");
         RpgService.stopPulling();
     });
+
+    $scope.roleDices = function(){
+        console.log("Nu ska det slåss tärningar!");
+
+        var nrOfDices   = $scope.input.dice.nr;
+        var diceType    = $scope.input.dice.type;
+        var diceModType = $scope.input.dice.modtype;
+        var diceMod     = $scope.input.dice.mod;
+        var diceMotivation  = $scope.input.dice.description;
+
+        console.log("Nr " +nrOfDices+ " Type:" + diceType+ " Mod type: " +diceModType+ " Mod: " +diceMod + ", motivering: "+diceMotivation);
+
+        RpgService.roleOrdinaryDices(nrOfDices,diceType,diceModType,diceMod,diceMotivation);
+
+    }
 
 });
 

@@ -16,7 +16,7 @@ class chronicleController extends ApiController
 		return $this->BL = new Chronicle_BL();
 	}
 
-	public function index($campaign_id)
+	public function index()
 	{
 		// One have to decide which campaign to watch for.
 		return $this->respondNotFound();
@@ -50,8 +50,8 @@ class chronicleController extends ApiController
 	        ]);
 
 			$result = $this->BL->store($request);
-			if($result == false) return $this->respondNotAuthorized();
-			return $this->respond($result);
+			if($result === false) return $this->respondNotAuthorized();
+			return $this->respond(array('stored_id' => $result ) );
 		} catch (Exception $e)
 		{
 			return $this->respondWithError($e);

@@ -8,6 +8,7 @@ use Sagohamnen\Chronicle\Chronicle_BL;
 use Sagohamnen\Last_read\Last_read_BL;
 
 use App\Http\Requests;
+use Auth;
 
 class RpgChatController extends ApiController
 {
@@ -47,12 +48,36 @@ class RpgChatController extends ApiController
         ]);
 
         try {
-    		$result = $this->BL->store($request);
+    		$result = $this->BL->store($request, $my_id);
+            if ($result === false) return $this->respondNotAuthorized();
     		return $this->respond( $result );
     	} catch(Exception $e)
     	{
     		return $this->respondInternalError($e);
     	}
+    }
 
+    public function storeDiceRole(Request $request)
+    {
+        // If this fails, it throws an 422 exception if.
+        // ajax, but if unit test is gives 302.
+        $this->validate($request, [
+            'campaign_id'        => 'required|numeric|min:1',
+            'dice_nr'            => 'required|numeric|min:1|max:100',
+            'dice_type'          => 'required|numeric|in:' . implode(',', config('sh.dice_types') ),
+            'dice_mod_type'      => 'required|numeric|min:0|max:1',
+            'dice_mod'           => 'required|numeric|min:0|max:1000',
+            'dice_description'   => 'required|min:1|max:250'
+        ]);
+
+        try {
+            $result = $this->BL->store_dices($request);
+
+            if ($result === false) return $this->respondNotAuthorized();
+            return $this->respond( $result );
+        } catch(Exception $e)
+        {
+            return $this->respondInternalError($e);
+        }
     }
 }

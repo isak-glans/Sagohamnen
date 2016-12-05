@@ -1,8 +1,12 @@
 <?php
 namespace Sagohamnen\Rpg_chat;
-use Sagohamnen\Rpg_chat\Rpg_chat_repository;
+
 use App\User;
 use Carbon\Carbon;
+use Auth;
+use Sagohamnen\Rpg_chat\Rpg_chat_repository;
+use Sagohamnen\Character\Character_repository;
+use Sagohamnen\Campaign\Campaign_repository;
 
 class Rpg_chat_BL
 {
@@ -75,7 +79,80 @@ class Rpg_chat_BL
 
 	public function store($data)
 	{
-		return $this->rep->store($data->campaign_id, $data->user_id, $data->text, $data->type);
+		if (Auth::check() == false) return false;
+        $my_id = Auth::id();
+
+		// Check if user part of campaign.
+		if(! $this->is_user_part_of_campaign($data->campaign_id, $my_id))
+			return false;
+
+		return $this->rep->store(
+			$data->campaign_id,
+			$data->user_id,
+			$data->text,
+			config('sh.chat_type_chat'));
+	}
+
+	public function store_dices($data)
+	{
+		$result = 0;
+
+		if (Auth::check() == false) return false;
+        $my_id = Auth::id();
+
+		// Check if user part of campaign.
+		if(! $this->is_user_part_of_campaign($data->campaign_id, $my_id))
+			return false;
+
+		// See if dice type valid.
+		if ( !in_array($data->dice_type, config('sh.dice_types') ) ) return false;
+		// See if dice mod type valid.
+		if ( !in_array($data->dice_mod_type, config('sh.dice_mod_types') ) ) return false;
+
+		// Check dice type.
+		if ($data->dice_type == 7) {
+			// Role OB T6.
+		} else {
+			// Role ordinary dices.
+			for($x=0; $x <= $data->dice_nr; $x++){
+				$result += rand(1,$data->dice_type);
+				if ($x > 1000)break;
+			}
+
+			if ($data->dice_mod_type == 0) {
+				// Add.
+				$result += $data->dice_mod;
+				$result_text = "slog " . $data->dice_nr . "T" . $data->dice_type . "+" . $data->dice_mod . " och fick " . $result . ". " . $data->dice_description;
+			}else {
+				// Substract
+				$result -= $data->dice_mod;
+				$result_text = "slog " . $data->dice_nr . "T" . $data->dice_type . "-" . $data->dice_mod . " och fick " . $result . ". " . $data->dice_description;
+			}
+		}
+
+		// Save it as chat.
+		$this->rep->store(
+			$data->campaign_id,
+			$my_id,
+			$result_text,
+			config('sh.chat_type_dice'));
+
+		return true;
+	}
+
+	private function is_user_part_of_campaign($campaign_id, $my_id){
+		$char_rep = new Character_repository();
+		$camp_rep = new Campaign_repository();
+
+		// See if have character playing in the campaign.
+		$have_playing_or_npc = $char_rep->count_mine_playing_or_npc_in_campaign($my_id, $campaign_id);
+		if ($have_playing_or_npc) return true;
+
+		// See if user is GM.
+		$gm_id = $camp_rep->find_gamemaster_id($campaign_id);
+		if ($gm_id->id == $my_id) return true;
+
+		return false;
 	}
 
 }

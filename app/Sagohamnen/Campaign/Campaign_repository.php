@@ -130,4 +130,9 @@ class Campaign_repository
 		return Campaign::select('user_id')->where('id', $campaign_id)->with('gamemaster_avatar')->first();
 	}
 
+	public function find_gamemaster_id($campaign_id)
+	{
+		return Campaign::select('user_id')->where('id', $campaign_id)->first();
+	}
+
 }

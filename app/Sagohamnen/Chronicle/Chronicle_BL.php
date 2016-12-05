@@ -7,6 +7,7 @@ use Sagohamnen\Campaign\Campaign_repository;
 use Sagohamnen\Character\Character_repository;
 use Sagohamnen\Chat\Chat_repository;
 use Auth;
+use Carbon\Carbon;
 
 class Chronicle_BL {
 
@@ -71,16 +72,23 @@ class Chronicle_BL {
 		$text 			= $request_data->text;
 		$character_id	= $request_data->character_id;
 
-		// Check if user own the character.
+		// If GM and he picked no character (id equal zero),
+		// then set it to null. Character_id is nullable.
+		if ($character_id == 0) $character_id = null;
+
+		// Check if user logged in.
 		if (Auth::check() == false) return false;
         $my_id = Auth::id();
 
-        // Check if the character exist.
-        $the_character = $character_rep->find_in_campaign($character_id, $campaign_id);
-        if ($the_character == null) return false;
+        // Character checks.
+        if ($character_id !== null ){
+        	// Do it exist.
+        	$the_character = $character_rep->find_in_campaign($character_id, $campaign_id);
+	        if ($the_character == null) return false;
 
-        // Is it mine?
-        if ($my_id != $the_character->id ) return false;
+	        // Is it mine?
+	        if ($my_id != $the_character->id ) return false;
+        }
 
 		// Check if campaign exist.
 		$the_campaign = $campaign_rep->identify_campaign($campaign_id);
@@ -93,16 +101,69 @@ class Chronicle_BL {
 		// If I am neither GM or player, dont continue.
 		if ( $me_player == false && $me_gm == false ) return false;
 
+		// If user spamming, dont save.
+		if ( $this->is_spamming_chronicles($campaign_id, $my_id) ) return null;
+
+		// If code reach here, it is okay to save it.
 		$obj_to_store = new \StdClass;
-		$obj_to_store->text 			= $text;
+		$obj_to_store->text 		= $text;
 		$obj_to_store->campaign_id 	= $campaign_id;
 		$obj_to_store->character_id = $character_id;
 		$obj_to_store->user_id		= $my_id;
 
 		// Store it
-		$this->chronicle_rep->store($obj_to_store);
+		$table_id = $this->chronicle_rep->store($obj_to_store);
 
-		return true;
+		return $table_id;
+	}
+
+	public function is_spamming_chronicles($campaign_id, $my_id)
+	{
+		// Make sure the user is not spamming entries.
+		// Check last (say 10 entries) and check if all is made by me.
+		$max_nr = config('sh.max_chronicles_in_row');
+		$spamming = true;
+
+		// Get last chronicle entries made.
+		$last_chronicles = $this->chronicle_rep->latest_chronicles_in_rpg($campaign_id, $max_nr);
+
+		// If rpg have no chronicle entries.
+		if ($last_chronicles == null) return false;
+
+		// If rpg have less then max_nr of chronicles in row.
+		if (count($last_chronicles) < $max_nr ) return false;
+
+		// Check if all has been made by me.
+		foreach ($last_chronicles as $chronicle ) {
+			// If any chronicle not mine, then I am not spamming.
+			if ( $chronicle->user_id != $my_id) {
+				$spamming = false;
+			}
+		}
+
+		$apa = $spamming == true ? "true" : "false";
+		return $spamming;
+
+		//echo "my_last_entry: " .$my_last_entry;
+		/*echo "<pre>";
+		print_r($my_last_entry);
+		echo "</pre>";*/
+
+		/*if ($my_last_entry) {
+			// Check if done within minute.
+			$last_entry = Carbon::parse( $my_last_entry );
+			//echo "my_last_entry as Carbon: " .$last_entry;
+            $now = Carbon::now();
+
+            // See if last activity less then one minute ago.
+            // lte = Less Then or Equal to.
+            if ( $last_entry->gte( $now->subMinute() ) ) {
+            	//echo " Mindre än 1 minut sedan. ";
+                return true;
+            }
+		}
+		return false;*/
+
 	}
 
 }

@@ -11,5 +11,5 @@ sagohamnenApp.constant('config', {
     rpgChatStyleMessage				:0,
     rpgChatStyleDie					:1,
 
-
+    maxChroniclesInRow              :10,
 });

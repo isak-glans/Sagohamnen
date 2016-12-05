@@ -1,3 +1,8 @@
+// This directive will communicate with the index.php
+// and show a loader icon when Angular Route are waiting
+// for a resolver to finish. This way the user wont be
+// confused if nothing happens while page is loading.
+
 angular.module('ShApp')
 .directive('routeLoadingIndicator', function($rootScope, $route, $timeout) {
   return {
@@ -7,47 +12,13 @@ angular.module('ShApp')
     link: function(scope, element) {
 
       $rootScope.$on('$routeChangeStart', function(event, currentRoute, previousRoute) {
-        console.log("Nu laddas en route.");
         scope.isRouteLoading = true;
-
-        if (previousRoute) return;
-
-        $timeout(function() {
-          element.removeClass('ng-hide');
-        });
       });
 
       $rootScope.$on('$routeChangeSuccess', function() {
-        element.addClass('ng-hide');
         scope.isRouteLoading = false;
       });
     }
   };
 });
 
-
-
-/*var routeLoadingIndicator = function($rootScope, $route, $timeout){
-  return {
-    restrict:'E',
-    template:"<h1 ng-if='isRouteLoading'>Loading...</h1>",
-    link:function(scope, elem, attrs){
-      scope.isRouteLoading = true;
-
-      console.log("Inne i routerLoeaderDir");
-
-      $rootScope.$on('$routeChangeStart', function(){
-        scope.isRouteLoading = true;
-        console.log("Nu laddas en route.");
-      });
-
-      $rootScope.$on('$routeChangeSuccess', function(){
-        scope.isRouteLoading = false;
-        console.log("Nu har en route laddats klart.");
-      });
-
-
-
-    }
-  };
-};*/

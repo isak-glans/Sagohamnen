@@ -24,13 +24,16 @@ class CharacterController extends ApiController
 	}
     public function show($id)
     {
-    	$id_value = ctype_digit($id) ? intval($id) : null;
-    	if($id_value === null) return $this->respondMissingInput();
+        try {
+            $result = $this->Char_BL->single_character($id);
 
-    	$result = $this->Char_BL->single_character($id_value);
-        if ($result === "not_found") return $this->respondNotFound();
-    	if ($result === false) return $this->respondInternalError();
-    	return $this->respond($result );
+            if ($result === "not_found") return $this->respondNotFound("Not found");
+            if ($result === false) return $this->respondInternalError("Internal error.");
+            return $this->respond($result );
+        }catch(Exception $e)
+        {
+            $this->respondInternalError("$e");
+        }
     }
 
     // Create new
