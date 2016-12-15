@@ -13,7 +13,6 @@ class ArchiveCharTest extends TestCase
 {
     use DatabaseMigrations;
 
-    private $the_user;
     private $the_campagin;
     private $character1;
     private $character2;

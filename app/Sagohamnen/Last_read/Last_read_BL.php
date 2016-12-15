@@ -26,7 +26,7 @@ class Last_read_BL {
 
 	public function active_users($campaign_id)
 	{
-		$result_objs = $this->rep->active_users($campaign_id);
+		$result_objs = $this->rep->users_in_rpg_room($campaign_id);
 		$result_array = array();
 		foreach( $result_objs as $object){
 			array_push($result_array, $object->user_id);

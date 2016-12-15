@@ -20,6 +20,7 @@ class TableUsers extends Migration
             $table->text('avatar')->nullable();
             $table->tinyInteger('rating')->unsigned()->default(0);
             $table->rememberToken();
+            $table->dateTime('activity');
             $table->timestamps();
             $table->tinyInteger('status')->unsigned()->index()->default(0)->comment = "0:not active; 1:registered, 2: admin";
         });

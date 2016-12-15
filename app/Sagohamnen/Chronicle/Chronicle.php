@@ -5,12 +5,10 @@ namespace Sagohamnen\Chronicle;
 use Illuminate\Database\Eloquent\Model;
 use App\User;
 
+use Sagohamnen\Traits\likeability;
+
 class Chronicle extends Model
 {
-	/*public function materials()
-    {
-        return $this->belongsToMany('Sagohamnen\Material\Material')->select('id', 'type', 'name', 'media_id')->with('media')->where('status', 1);
-    }*/
 
     public function user()
     {
@@ -21,4 +19,6 @@ class Chronicle extends Model
     {
     	return $this->belongsTo('Sagohamnen\Character\Character')->select('id', 'name', 'portrait_id', 'status');
     }
+
+    use Likeability;
 }

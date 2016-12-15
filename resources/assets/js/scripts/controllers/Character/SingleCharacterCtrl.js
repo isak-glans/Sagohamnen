@@ -1,7 +1,7 @@
 angular.module('ShApp')
 
 // inject the Comment service into our controller
-.controller('SingleCharacterCtrl', function($scope, singleCharacter, config, NavigationService, CharacterFactory ) {
+.controller('SingleCharacterCtrl', function($scope, singleCharacter, config, NavigationService, CharacterService ) {
 
 	$scope.form = {};
 	$scope.showConfirmArchive = false;
@@ -37,11 +37,12 @@ angular.module('ShApp')
 	}
 
 	var changeCharStatus = function(newStatus){
-		CharacterFactory.changeStatus({id: $scope.form.id, status: newStatus} , function(response) {
-			setStatusText(newStatus);
-		}, function(response){
-			console.log("failure");
-		})
+
+		var characterID = $scope.form.id;
+
+    	CharacterService.changeStatus(characterID, newStatus).then(function(response){
+    		setStatusText(newStatus);
+    	});
 	}
 
 	$scope.showAlt = function() {
@@ -50,6 +51,10 @@ angular.module('ShApp')
 
 	$scope.setApplier = function() {
 		changeCharStatus(config.charStatusApplying);
+	}
+
+	$scope.setNpc = function() {
+		changeCharStatus(config.charStatusNpc);
 	}
 
 	$scope.setup();

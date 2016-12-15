@@ -6,7 +6,7 @@
     display: inline-block;
     //border: 2px solid #fffcfc;
 }
-.chatWrapper, .chronicleWrapper {
+.chatWrapper, .chronicleWrapper, .chatDiceWrapper {
 	width:100%;
 	height:350px;
 	overflow: auto;
@@ -15,12 +15,18 @@
 #chronicle{
 	width:100%;
 	height:400px;
-	background-color: #b8cccc;
+	background-color: rgba(208, 215, 215, 0.4);
 	.chronicleWrapper {
-		padding:15px;
+		padding:0px 15px;
 		height:380px;
+		font-family: georgia;
+    	font-size: 16px;
+    	.odd_element {
+    		background-color: rgb(199, 199, 199);
+    	}
 	}
 	.row {
+		padding:10px 0;
 		margin-bottom: 10px;
 	}
 	.entry-chronicle {
@@ -34,25 +40,36 @@
 		//background-color: red;
 	}
 	.entry-chronicle-gm{
-		background-color: rgba(199, 199, 199, 0.77);
+		//background-color: rgba(199, 199, 199, 0.77);
 		padding:10px;
 		font-style: italic;
+		color: #914b32;
 	}
 	div.text-column {
 		padding-left:25px;
 	}
 }
 
-#chat {
+.chatWrapper {
+	#chat {
+		width:100%;
+		height:400px;
+		background-color: rgba(250,250,250,0.1);
+		//padding: 10px;
+		.date {
+			font-size:60%;
+			color: grey;
+		}
+		p {
+			margin-right:0 20px 10px 0;
+		}
+	}
+}
+
+#chat_dices {
 	width:100%;
 	height:400px;
 	background-color: rgba(250,250,250,0.1);
-	//padding: 10px;
-	.date {
-		font-size:60%;
-		color: grey;
-	}
-
 }
 
 #input {

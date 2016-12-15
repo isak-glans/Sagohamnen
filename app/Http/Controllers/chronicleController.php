@@ -41,19 +41,19 @@ class chronicleController extends ApiController
 
 	public function store(Request $request)
     {
-    	try {
-
-    		$this->validate($request, [
+    	$this->validate($request, [
 	            'text'          => 'required|min:3|max:2500',
 	            'campaign_id'   => 'required|numeric',
-	            'character_id' 	=> 'required|numeric'
-	        ]);
+	            'character_id' 	=> 'integer'
+        ]);
 
-			$result = $this->BL->store($request);
-			if($result === false) return $this->respondNotAuthorized();
-			return $this->respond(array('stored_id' => $result ) );
+    	try {
+    		$result = $this->respond( $this->BL->store($request) );
+			return $result;
 		} catch (Exception $e)
 		{
+			echo "Fel uppfångat.";
+			//echo "Blev fel " . $e->getMessage();
 			return $this->respondWithError($e);
 		}
     }

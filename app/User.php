@@ -16,7 +16,7 @@ class User extends Authenticatable
      * @var array
      */
     protected $fillable = [
-        'name', 'email', 'description', 'status', 'avatar'
+        'name', 'email', 'description', 'status', 'avatar', "password", 'activity'
     ];
 
     /**
@@ -25,7 +25,7 @@ class User extends Authenticatable
      * @var array
      */
     protected $hidden = [
-        'email', 'remember_token'
+        'password', 'email', 'remember_token'
     ];
 
     /*public function campaign_players()

@@ -1,9 +1,13 @@
 angular.module('ShApp')
 
-.factory('RpgService', function(RpgChatFactory, UserService, config, $rootScope, PortraitService, $q, ChronicleFactory) {
+.factory('RpgService', function(UserService, config, $rootScope, $resource, PortraitService) {
 
 	var factory = {};
-	//factory.portraits = [];
+
+	var RpgChat = $resource('/api/rpg_chat/:campaignId',{},{
+		newestChats : { method : "GET", url : "/api/rpg_update/:campaignId/newest/:chatId/:chronicleId"}
+	});
+
 	factory.onlineUsersId = [];
 	factory.onlineUsers = [];
 	factory.users = {
@@ -14,7 +18,6 @@ angular.module('ShApp')
 	factory.characters = [];
 	factory.portraits = [];
 	factory.info = {
-		readyForLoop	: false,
 		readyForLoop	: false,
 		updateCounter 	: 0,
 		updateDelay		: 3000,
@@ -36,10 +39,12 @@ angular.module('ShApp')
 		factory.info.lastReadChatId = 0;
 		factory.info.lastReadChronicleId = 0;
 
-		// Store importent info.
+		// Store important info.
 		factory.info.campaignId = setupData.campaign.id;
 		factory.info.gmId		= setupData.campaign.user_id;
 		factory.characters 		= setupData.characters;
+
+
 
 		// Save data about all users who play or are GM,
 		// and store in the service.
@@ -48,17 +53,21 @@ angular.module('ShApp')
 		// Fetch the portraits for characters.
 		giveCharactersPortraits(factory.characters);
 
+
 		// Run the shit!
 		chatLoop();
 
 	}
 
-	factory.myCharacters = function(){
+	factory.my_characters = function(){
 		var myCharacters = [];
+
+		// If rpg have no characters.
+		if (factory.characters.length == 1 ) return myCharacters;
 
 		// If user is gm, add an extra option for "no" character.
 		if (meGm() ){
-			myCharacters.push( {id:"0", name:"Ingen", portrait_id:0});
+			myCharacters.push( {id:"0", name:"Berättarröst", portrait_id:0});
 		}
 
 		// Collect those characters that are the user´s.
@@ -71,13 +80,86 @@ angular.module('ShApp')
 		return myCharacters;
 	}
 
-	factory.getNewest = function() {
+	factory.stopPulling = function(){
+		clearInterval(timerId);
+	}
+
+	factory.interpret_stored_chat_response = function(response) {
+		var chatEntry = {};
+		if (!!response.id && !!response.text && !!response.created_at && !!response.user_id ) {
+            chatEntry.id           = response.id;
+            chatEntry.text         = response.text;
+            chatEntry.date         = response.created_at;
+            chatEntry.user_id      = response.user_id;
+            // Format result.
+            chatEntry = format_chat_from_db(chatEntry);
+            return chatEntry;
+        } else return null;
+	}
+
+	factory.format_chronicle = function( campaignId, text, characterId, info ){
+		var entry = {
+            'id' : info.id,
+            'text' : text,
+            'campaign_id' : campaignId,
+            'character_id' : characterId,
+            'user_id'       : info.user_id,
+        }
+
+        // Add Character info if there is some.
+        if (entry.character_id > 0){
+        	entry.character =  { status : info.chararacter_status, 'portrait_id' : info.character_portrait_id};
+        }
+
+		return format_chronicle_from_db(entry);
+	}
+
+	factory.doEntryExist = function(oldEntries, newEntry)
+	{
+		var exists = false;
+		oldEntries.forEach(function(row){
+			if (row.id == newEntry.id) {
+				exists = true;
+				return true;
+			}
+		});
+
+		return exists;
+	}
+
+	// ===================================
+	// PRIVATE FUNCTIONS
+	// ===================================
+
+	var chatLoop = function () {
+
+		// Kill possible old timer.
+		clearTimeout(timerId);
+
+	    function updateLoop() {
+	        factory.info.updateCounter += 1;
+	        if (factory.info.updateCounter == 5)
+	        	factory.info.updateDelay = 5000;
+	        if (factory.info.updateCounter == 10)
+	        	factory.info.updateDelay = 10000;
+	        if (factory.info.updateCounter == 50)
+	        	factory.info.updateDelay = 60000;
+
+	        getNewest();
+
+	        // Make this function loop.
+	        timerId = setTimeout(updateLoop, factory.info.updateDelay)
+	    }
+	    updateLoop();
+	}
+
+	function getNewest() {
 		var lastReadChatId = factory.info.lastReadChatId;
 		var lastRecievedChronicleId = factory.info.lastReadChronicleId;
 		var campaignId = factory.info.campaignId;
 
 		// Fetch updates.
-		RpgChatFactory.newestChats({
+		RpgChat.newestChats({
 			'campaignId'	: campaignId,
 			'chatId' 		: lastReadChatId,
 			'chronicleId'	: lastRecievedChronicleId }).$promise.then(function(response){
@@ -86,61 +168,6 @@ angular.module('ShApp')
 			console.log(error);
 		});
 	}
-
-	factory.storeChat = function(message, campaignId) {
-		factory.info.updateCounter = 0;
-		storeRpgChat(message, campaignId, config.rpgChatStyleMessage).then(function(){
-			factory.getNewest();
-		});
-	}
-
-	factory.storeChronicle = function(message, characterId) {
-		factory.info.updateCounter = 0;
-		factory.info.chronicleError = "";
-
-		var chronicle = new ChronicleFactory;
-		chronicle.text 			= message;
-		chronicle.campaign_id 	= factory.info.campaignId;
-		chronicle.character_id 	= characterId;
-
-		return chronicle.$save();
-	}
-
-	factory.storeDie = function(message, campaignId, type) {
-		//toreRpgChat(message, campaignId, config.rpgChatStyleDie);
-
-		//RpgChatFactory.storeDices(['campaignId' => campaignId]);
-
-	}
-
-	factory.stopPulling = function(){
-		clearInterval(timerId);
-	}
-
-	factory.roleOrdinaryDices = function(nr, type, modType, mod, description){
-		var campaignId = factory.info.campaignId;
-    	var chatDices = new RpgChatFactory;
-    	chatDices.campaign_id 	= campaignId;
-    	chatDices.dice_nr 		= nr;
-    	chatDices.dice_type 	= type;
-    	chatDices.dice_mod_type = modType;
-    	chatDices.dice_mod 		= mod;
-    	chatDices.dice_description = description;
-    	RpgChatFactory.storeDices({}, chatDices).$promise.then(function(res) {
-    		console.log(res);
-    	});
-
-    	/*'campaign_id'        => 'required|numeric|min:1',
-            'dice_nr'            => 'required|numeric|min:1|max:100',
-            'dice_type'          => 'required|numeric|min:4|max:100',
-            'dice_mod_type'      => 'required|numeric|min:0|max:1',
-            'dice_mod'           => 'required|numeric|min:0|max:1000',
-            'dice_description'*/
-    }
-
-	// ===================================
-	// PRIVATE FUNCTIONS
-	// ===================================
 
 	var callback_Updates = function(response){
 		var newChronicles = [];
@@ -168,39 +195,15 @@ angular.module('ShApp')
 
 		// If new chronicles
 		if (latestChronicleId > factory.info.lastReadChronicleId) {
-
 			// Remember if new chronicles arrived.
 			factory.info.lastReadChronicleId = latestChronicleId;
 
-			// The new chronicles.
 			newChronicles = response.newest_chronicles.chronicles;
-			// Since DB sort by descending order, reverse it
-			// so last entry comes at bottom.
-			newChronicles.reverse();
-
-			// Attach info.
 			newChronicles.forEach(function(row){
-
-				// If GM add style class.
-				if (row.user_id == factory.info.gmId)
-					row.styleClass = "entry-chronicle-gm";
-
-				// Attach portrait url:s
-				if (row.character !== null){
-					// Add status classes.
-					if (row.character.status == config.charStatusPlaying )
-						row.styleClass = "entry-chronicle-player";
-					else if (row.character.status == config.charStatusNpc )
-						row.styleClass = "entry-chronicle-npc";
-					else row.styleClass = "";
-
-					row.character.portrait = findPortrait(row.character.portrait_id).thumbnail;
-					//PortraitService.all_portraits[row.character.portrait_id].thumbnail;
-				}
-
-				// Find user
-				row.name = findUser(row.user_id).name;
+				row = format_chronicle_from_db(row);
 			});
+
+			newChronicles.reverse();
 		}
 
 		// If new chats.
@@ -208,27 +211,14 @@ angular.module('ShApp')
 			factory.info.lastReadChatId = latestChatId;
 			factory.info.updateCounter = 0;
 
-			// Get the new chats.
 			newChats = response.newest_chats.chats;
-
-			// Make some changes
 			newChats.forEach(function(row){
-				// Convert string to date.
-	            row.date = new Date(row.date);
-
-	            // Add username, wich was fetched with setupData.
-	            row.name = findUser(row.user_id).name;
-
-	            // if dices results
-	            if (row.type == config.rpgChatStyleDie) {
+				row = format_chat_from_db(row);
+	            // Fetch dices.
+	            if (row.type == config.rpgChatStyleDie)
 	            	newDices.push(row);
-	            }
 	        });
 
-			// Make sure the list of chats is not too large.
-	        //TrimNrChats();
-
-	        // Make newest appear last in list.
 	        newChats.reverse();
 		}
 
@@ -241,6 +231,38 @@ angular.module('ShApp')
 			'onlineUsersChanged' : onlineUsersChanged });
 	}
 
+	function format_chat_from_db(chat){
+		chat.date = new Date(chat.date);
+        // Add username, wich was fetched with setupData.
+        chat.name = findUser(chat.user_id).name;
+        return chat;
+	}
+
+	function format_chronicle_from_db(chronicle)
+	{
+		// If GM add style class.
+		if (chronicle.user_id == factory.info.gmId)
+			chronicle.styleClass = "entry-chronicle-gm";
+
+		// Attach portrait url:s
+		if (!!chronicle.character){
+			// Add status classes.
+			if (chronicle.character.status == config.charStatusPlaying )
+				chronicle.styleClass = "entry-chronicle-player";
+			else if (chronicle.character.status == config.charStatusNpc )
+				chronicle.styleClass = "entry-chronicle-npc";
+			else chronicle.styleClass = "";
+
+			chronicle.character.portrait = findPortrait(chronicle.character.portrait_id);
+		}
+
+		// Find user
+		chronicle.name = findUser(chronicle.user_id).name;
+
+		return chronicle;
+	}
+
+
 	var TrimNrChats = function() {
         var totalNr = factory.chats.length;
         var maxNrChats = 40;
@@ -249,39 +271,6 @@ angular.module('ShApp')
             factory.chats.splice(0,nrToRemove);
         }
     }
-
-	var chatLoop = function () {
-
-		// Kill possible old timer.
-		clearTimeout(timerId);
-
-	    function updateLoop() {
-	        factory.info.updateCounter += 1;
-	        if (factory.info.updateCounter == 5)
-	        	factory.info.updateDelay = 5000;
-	        if (factory.info.updateCounter == 10)
-	        	factory.info.updateDelay = 10000;
-	        if (factory.info.updateCounter == 50)
-	        	factory.info.updateDelay = 60000;
-	        //console.log("Hämtar inlägg. counter: " + factory.info.updateCounter + " and delay: " + factory.info.updateDelay );
-	        //console.log(factory.info.updateCounter);
-	        factory.getNewest();
-
-
-	        // Make this function loop.
-	        timerId = setTimeout(updateLoop, factory.info.updateDelay)
-	    }
-	    updateLoop();
-	}
-
-	var storeRpgChat = function(message, campaignId, type) {
-		var chat = new RpgChatFactory();
-		chat.user_id		= UserService.currentUser.id;
-		chat.text 			=  message;
-		chat.campaign_id 	= campaignId;
-		chat.type		 	= type;
-		return chat.$save();
-	}
 
     var findUser = function(userId)
     {
@@ -317,7 +306,7 @@ angular.module('ShApp')
     	return ok;
     }
 
-    var findPortrait = function(portraitID)
+    var findPortrait = function(portraitID, thumbnail = true)
     {
     	var thePorrait;
 
@@ -326,7 +315,7 @@ angular.module('ShApp')
     		if (portrait.id == portraitID)
 	    		thePorrait = portrait;
 	    	});
-	    	return thePorrait;
+	    	return thumbnail ? thePorrait.thumbnail : thePorrait.medium;
     	} else {
     		console.log("Porträtten kunde inte hittas.");
     		return null;
@@ -337,16 +326,14 @@ angular.module('ShApp')
     {
     	characters.forEach(function(character){
 			character.portrait = {
-				'thumbnail': findPortrait(character.portrait_id).thumbnail,
-				'medium' : findPortrait(character.portrait_id).medium};
+				'thumbnail': findPortrait(character.portrait_id),
+				'medium' : findPortrait(character.portrait_id, false)};
     	});
     }
 
     var meGm = function(){
     	return factory.info.gmId == UserService.currentUser.id;
     }
-
-
 
 	return factory;
 

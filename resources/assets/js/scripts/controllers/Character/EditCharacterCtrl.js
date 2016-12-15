@@ -1,7 +1,7 @@
 angular.module('ShApp')
 
 // inject the Comment service into our controller
-.controller('EditCharacterCtrl', function($scope, $location, $routeParams, CharacterFactory, config, $mdDialog) {
+.controller('EditCharacterCtrl', function($scope, $location, $routeParams, config, $mdDialog, setupData, CharacterService) {
 
 	$scope.form = {};
 	$scope.portrait = {id : 0, url: ""};
@@ -9,29 +9,15 @@ angular.module('ShApp')
 	//var status = { 0=>'Arkiverad', 1=>'Ansöker', 2=>'Spelare', 3=>'SLP'};
 
 	$scope.setup = function () {
-		var characterId = $routeParams.characterId;
-    	if( characterId == null) $location.path("error/404");
+		$scope.campaignId = setupData.id;
+		setupData.created_at = new Date( setupData.created_at );
+		setupData.updated_at = new Date( setupData.updated_at );
 
-    	var theCharacter = CharacterFactory.get({id: characterId}, function(response) {
+		$scope.portrait.id 	= setupData.portrait.id;
+		$scope.portrait.url 	= setupData.portrait.medium;
 
-    		// If character is archived then user are not allowed to edit it.
-    		if (response.can_edit == false){
-    			$location.path("error/403");
-    		}
-
-    		$scope.campaignId = response.id;
-			response.created_at = new Date( response.created_at );
-			response.updated_at = new Date( response.updated_at );
-
-			$scope.portrait.id 	= response.portrait.id;
-			$scope.portrait.url 	= response.portrait.medium;
-
-			$scope.headline = angular.copy(response.name);
-			$scope.form = response;
-	      //console.log(response);
-	    }, function(response) {
-	      if(response.status == 404) $location.path("error/404");
-	    } );
+		$scope.headline = angular.copy(setupData.name);
+		$scope.form = setupData;
 	}
 
 	$scope.saveEdit = function(){
@@ -46,13 +32,10 @@ angular.module('ShApp')
 		postData.excerpt 			= $scope.form.excerpt;
 		//postData.campaign_id		= $scope.form.campaign.id;
 
-		CharacterFactory.update({id: $scope.form.id}, postData, function(response) {
-			//console.log(response);
+		var result = CharacterService.update($scope.form.id, postData);
+		result.then(function(response){
 			$location.path("character/"+postData.id);
-	    }, function(response) {
-    		//console.log(response);
-	      //if(response.status == 404) $location.path("error/404");
-	    } );
+		});
 
 	}
 
@@ -73,12 +56,16 @@ angular.module('ShApp')
 
         // Confirm delete.
         $mdDialog.show(confirm).then(function() {
-        	CharacterFactory.changeStatus({id: $scope.form.id, status: config.charStatusArchived} , function(response) {
+        	// Ask server to change status.
+        	var characterID = $scope.form.id;
+        	var newStatus = config.charStatusArchived;
+
+        	CharacterService.changeStatus(characterID, newStatus).then(function(response){
+        		$location.path( "character/" + characterID );
+        	});
+        	/*CharacterFactory.changeStatus({id: $scope.form.id, status: config.charStatusArchived} , function(response) {
         		$location.path("character/"+$scope.form.id);
-			}, function(response){
-				console.log("failure");
-				$location.path("error/500");
-			});
+			});*/
         }, function() {
              console.log("Nope");
         });

@@ -81,9 +81,17 @@ sagohamnenApp.config(function($routeProvider) {
             }
         }
     })
+    // View chronicles per page.
     .when("/campaign/:campaignId/chronicle/:pageNr", {
         templateUrl : "views/chronicles/chronicles.html",
-        controller  : 'ChronicleController'
+        controller  : 'chronicle/ChronicleController',
+        resolve : {
+            entriesPerPage : function(ChronicleService, $route) {
+                return ChronicleService.entriesPerPage({
+                    'campaignId'  : $route.current.params.characterId,
+                    'chronicleId' : $route.current.params.pageNr });
+            }
+        }
     })
     .when("/character/:characterId", {
         templateUrl : "views/characters/single_character.html",
@@ -94,10 +102,13 @@ sagohamnenApp.config(function($routeProvider) {
             }
         }
     })
-    .when("/edit_character/:characterId", {
+    .when("/edit_character/:id", {
         templateUrl : "views/characters/edit_character.html",
         controller  : 'EditCharacterCtrl',
         resolve : {
+            setupData : function(CharacterService, $route ){
+                return CharacterService.setupEditCharacter($route.current.params.id).$promise;
+            },
             portraitData : function(PortraitService){
                 return PortraitService.loadPortraits();
             }
@@ -107,6 +118,9 @@ sagohamnenApp.config(function($routeProvider) {
         templateUrl : "views/rpg/single_rpg.html",
         controller  : 'SingleRpgCtrl',
         resolve: {
+            checkUser: function(UserService){
+                UserService.checkIfLoggedIn();
+            },
             setupData: function(CampaignFactory,$route){
                 return CampaignFactory.setupRpg({id : $route.current.params.campaignId}).$promise;
             },
@@ -137,13 +151,10 @@ sagohamnenApp.config(['$httpProvider', function ($httpProvider) {
         return {
             'responseError': function(response) {
                 if(response.status === 401) {
-                    $location.path('/error/403'); // Replace with whatever should happen
+                    $location.path('/error/401');
                 }
                 else if (response.status === 403 ){
-                    // Ask the user to login?
-                    $rootScope.signedIn = false;
-                    $rootScope.$broadcast('loginChange', { logedIn: false });
-                    $location.path('/error/403'); // Replace with whatever should happen
+                    $location.path('/error/403');
                 }
                 else if(response.status === 500) {
                     $location.path('/error/500');

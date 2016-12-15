@@ -11,6 +11,9 @@ use Carbon\Carbon;
 use App\SocialAccountService;
 use Socialite;
 
+
+use Laravel\Socialite\Contracts\Provider;
+
 class SocialAuthController extends ApiController
 {
 
@@ -21,9 +24,25 @@ class SocialAuthController extends ApiController
 
     public function callback(SocialAccountService $service, $provider)
     {
+        //$bajs = $request->session()->exists('last_activity');
+        //var_dump($bajs);
+        $apa = Session::get('fiskar');
+        var_dump($apa);
+        $user = $service->createOrGetUser(Socialite::driver($provider));
         try {
-            $user = $service->createOrGetUser(Socialite::driver($provider));
+            //echo "Provider: ". $provider;
+            //var_dump(Socialite::driver('facebook')->user());
 
+
+            //$katt = $request->session()->all();
+
+            //$apa = Session::get('last_activity');
+            /*echo "session: ". $apa;*/
+
+
+
+            //$user = $service->createOrGetUser(Socialite::driver('facebook')->user());
+            //$user = $service->createOrGetUser(Socialite::driver($provider));
             if ($user === null) return $this->respondInternalError();
             //dd($user);
 
@@ -32,7 +51,7 @@ class SocialAuthController extends ApiController
             $user = Auth::user();
             if ($user) {
                 $now = Carbon::now();
-                $user->updated_at = $now;
+                //$user->activity = $now;
                 $user->save();
                 Session::put('last_activity', $now);
             }

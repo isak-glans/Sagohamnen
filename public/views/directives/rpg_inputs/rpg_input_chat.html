@@ -1,0 +1,30 @@
+<ng-form name="chatForm" novalidate >
+	<div class="form-group">
+		<div class="row">
+			<div class="col-sm-5" ng-class="{'has-error' : dice_form.nr_of_dices.$invalid }">
+				<textarea
+					name="chattext"
+					id="chat-text"
+					ng-model="input.chat"
+					class="form-control chat"
+					ng-minlength="2"
+					ng-maxlength="500"
+					maxlength = "500"
+					rows="2"
+					ng-required="true" /></textarea>
+				<p ng-show="chatForm.chattext.$error.maxlength" class="help-block">Chatinlägget är för långt.</p>
+				<p ng-show="error.chat" class="text-danger">{{error.chat}}</p>
+			</div>
+		</div>
+
+		<div class="row">
+			<div class="col-sm-12">
+				<button
+					type="button"
+        			class="btn btn-primary pull-right"
+        			ng-click="storeChat()"
+        			ng-disabled="chatForm.$invalid">Skicka</button>
+			</div>
+		</div>
+	</div>
+</ng-form>

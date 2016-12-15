@@ -1,25 +1,9 @@
 <div id="user_section" >
-	<!-- <a ng-href="#/login" ng-hide="meSignedIn" class="loginBt"><i class="fa fa-sign-in" aria-hidden="true"></i> Logga in</a> -->
-
-
-	<div ng-show="currentUser.loggedIn">
-		<a class="btn btn-default" ng-href="#/user/{{currentUser.id}}"><i class="fa fa-user fa-fw"></i>{{currentUser.name}}</a>
+	<div ng-show="menuUser.loggedIn">
+		<a class="btn btn-default" ng-href="#/user/{{menuUser.id}}"><i class="fa fa-user fa-fw"></i>{{menuUser.name}}</a>
 		<!-- <a class="btn btn-default" ng-click="logout()">Logga ut</a> -->
 	</div>
-	<div ng-show="!currentUser.loggedIn">
+	<div ng-show="!menuUser.loggedIn">
 		<a class="btn btn-default" ng-href="#/login"><i class="fa fa-sign-in" aria-hidden="true"></i> Logga in</a>
 	</div>
-
-
-
-	<!-- <div class="user_bootstrap" >
-		<div class="btn-group">
-		  <a class="btn btn-default" href="#/user/{{user_info.myId}}"><i class="fa fa-user fa-fw"></i> {{user_info.myName}}</a>
-		  <div class="btn btn-default dropdown-toggle" data-toggle="dropdown" href="#">
-		    <span class="fa fa-caret-down" title="Användarmeny"></span>
-		  </div>
-		  <div ng-show="user_info.signed_in">
-		  	{{user_info.myName }}
-		  </div>
-	</div> -->
 </div>

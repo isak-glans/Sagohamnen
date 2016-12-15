@@ -32,8 +32,10 @@ class Character_BL
 	{
 		// Get data
 		$result = $this->char_rep->single_character($id);
-		if($result === null) return "not_found";
-		//if (isset($result->user_id) === false ) return false;
+		if($result === null) {
+			abort(404); // Not found
+		}
+
 
 		$my_id 	= $this->user_rep->my_id();
 		// Can user edit character?

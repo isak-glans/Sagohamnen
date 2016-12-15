@@ -37,7 +37,7 @@ class Last_read_repository
 		}
 	}
 
-	public function active_users($campaign_id)
+	public function users_in_rpg_room($campaign_id)
 	{
 		$oneMinute = Carbon::now()->subMinute(1);
 		return Last_read::select('user_id')->where('campaign_id', $campaign_id)->where('activity', '>', $oneMinute)->get();

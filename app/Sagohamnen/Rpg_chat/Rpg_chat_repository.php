@@ -25,6 +25,24 @@ class Rpg_chat_repository
 		return Rpg_chat::select('id','text', 'created_at', 'user_id', 'type')->where('campaign_id', $campaign_id)->where('id', '>', $dateId)->take(40)->orderBy('id', 'DESC')->get();
 	}
 
+	public function last_x_chats($campaign_id, $nr_of_chats)
+	{
+		return Rpg_chat::select('id','text', 'created_at', 'user_id', 'type')->where('campaign_id', $campaign_id)->take($nr_of_chats)->orderBy('id', 'DESC')->get();
+	}
+
+	public function delete_chats_with_older_id($campaign_id, $has_lower_id)
+	{
+		$chats_to_delete = Rpg_chat::select('id')->where('campaign_id', $campaign_id)->where('id', '<=', $has_lower_id)->get();
+
+		echo $chats_to_delete;
+
+		if(count($chats_to_delete) > 0 ){
+			foreach($chats_to_delete as $chat){
+				$chat->delete();
+			}
+		}
+	}
+
 	public function store($campaign_id, $user_id, $text, $type)
 	{
 		$new_chat = new Rpg_chat();
@@ -34,6 +52,8 @@ class Rpg_chat_repository
 		$new_chat->type 		= $type;
 		$new_chat->created_at 	= Carbon::now();
 		$new_chat->save();
+
+		return $new_chat;
 	}
 
 }

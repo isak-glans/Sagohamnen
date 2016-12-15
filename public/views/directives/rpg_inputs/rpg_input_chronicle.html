@@ -1,0 +1,43 @@
+
+<ng-form name="chronicleForm">
+	<div class="row" ng-class="{ 'has-error' : !!chronicleError}">
+		<div class="col-sm-7">
+			<textarea
+				name="chronicle_text"
+				id="chronicle-text"
+				ng-model="input.chronicle.text"
+				class="form-control rpg"
+				ng-minlength="3"
+				ng-maxlength="2500"
+				rows="8"
+				required></textarea>
+			<p ng-show="chronicleForm.chronicle_text.$error.minlength" class="help-block">Krönikeinlägget är för kort, eller saknas.</p>
+			<p ng-show="chronicleForm.chronicle_text.$error.maxlength" class="help-block">Krönikeinlägget är för långt.</p>
+			<p ng-show="!!chronicleError" class="help-block">{{chronicleError}}</p>
+		</div>
+
+		<div class="col-sm-2">
+			<label>Karaktär</label>
+			<ui-select ng-model="characterItem.selectedItem" theme="bootstrap">
+				<ui-select-match>
+				    <span ng-bind="$select.selected.name"></span>
+				</ui-select-match>
+				<ui-select-choices repeat="item in (myCharacters | filter: $select.search) track by item.id">
+					<img ng-src="{{ item.portrait.thumbnail }}" class="portrait" />
+				    <span ng-bind="item.name"></span>
+				</ui-select-choices>
+			</ui-select>
+
+			<div ng-style="{'background-image':'url({{characterItem.selectedItem.portrait.thumbnail}})'}" alt="bild" class="portrait" ng-href="/user/{{characterItem.selectedItem.id}}"></div>
+		</div>
+
+
+	</div> <!-- End row -->
+
+	<div class="row">
+		<div class="col-sm-12">
+				<button type="button" class="btn btn-primary pull-right" ng-click="saveChronicleEntry()" ng-disabled="chronicleForm.$invalid">Skicka</button>
+		</div>
+	</div>
+
+</ng-form>

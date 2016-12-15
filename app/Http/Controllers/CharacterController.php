@@ -25,16 +25,25 @@ class CharacterController extends ApiController
     public function show($id)
     {
         try {
-            $result = $this->Char_BL->single_character($id);
+            return $this->respond($this->Char_BL->single_character($id) );
+        }catch(Exception $e)
+        {
+            return $this->respondInternalError("$e");
+        }
+    }
 
-            if ($result === "not_found") return $this->respondNotFound("Not found");
-            if ($result === false) return $this->respondInternalError("Internal error.");
+    public function edit ($id)
+    {
+        try {
+            $result = $this->Char_BL->single_character($id);
+            if (!$result->can_edit) return $this->respondNotAuthorized();
             return $this->respond($result );
         }catch(Exception $e)
         {
-            $this->respondInternalError("$e");
+            return $this->respondInternalError();
         }
     }
+
 
     // Create new
     public function store(Request $request)

@@ -5,23 +5,31 @@ use Illuminate\Http\Request;
 use DB;
 
 //use Laravel\Socialite\Contracts\User as ProviderUser;
+use Laravel\Socialite\Contracts\User as ProviderUser;
 use Laravel\Socialite\Contracts\Provider;
+
 
 class SocialAccountService
 {
+
+    //public function createOrGetUser(ProviderUser $providerUser)
     public function createOrGetUser(Provider $provider)
     {
         // Get the user from Socialite.
         $providerUser = $provider->user();
-
         $providerName = class_basename($provider);
+
         $firstName = explode( " ", $providerUser->getName() )[0];
         $avatar = $this->avatar_url( $providerUser->getEmail(), false );
 
-        // Find SocialAccount.
-        $account = SocialAccount::whereProvider($providerName)
+        $account = SocialAccount::whereProvider('facebook')
             ->whereProviderUserId($providerUser->getId())
             ->first();
+
+        // Find SocialAccount.
+        /*$account = SocialAccount::whereProvider($providerName)
+            ->whereProviderUserId($providerUser->getId())
+            ->first();*/
 
         // Return user depending on account found or not.
         if ($account) {

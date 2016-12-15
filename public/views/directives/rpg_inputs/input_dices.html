@@ -1,0 +1,82 @@
+<form name="dice_form" novalidate>
+	<div class="row">
+		<div class="col-sm-2" ng-class= "{'has-error' : dice_form.nr_of_dices.$invalid }">
+			<label for="nrOfDices">Antal</label>
+			<input
+				name 		= "nr_of_dices"
+				id			= "nrOfDices"
+				type		= "number"
+				ng-model	= "input.dice.nr"
+				ng-init		= "input.dice.nr = 1"
+				class		= "form-control"
+				min			= "1"
+				max			= "100"
+				ng-minlength= "1"
+				ng-maxlength= "100">
+		</div>
+
+		<div class="col-sm-2">
+			<label for="selectDiceType">Typ</label>
+			<select
+				ng-model="input.selectDiceType"
+				ng-options="option.name for option in  diceTypeOptions track by option.value"
+				id="selectDiceType"
+				class="form-control">
+			</select>
+		</div>
+
+		<div class="col-sm-2" ng-class= "{'has-error' : dice_form.dice_mod.$invalid }">
+			<label for="dice_mod">Modifikation</label>
+			<input
+				name = "dice_mod"
+				id = "dice_mod"
+				ng-model="input.dice.mod"
+				type="number"
+				ng-init="input.dice.mod = 0"
+				class="form-control"
+				min = "-100"
+				max = "100"
+				ng-min = "-1000"
+				ng-max = "1000">
+		</div>
+
+		<div class="col-sm-2">
+		<label>Ob</label>
+		    <input type="checkbox"
+		       ng-model="input.dice.ob"
+		       class="form-control">
+		</div>
+	</div>
+
+	<div class="row">
+		<div class="col-sm-7">
+			<label>Beskrivning</label>
+			<input
+				type   			= "text"
+				ng-model		= "input.dice.description"
+				name  			= "input_dice_descr"
+				class 			= "form-control"
+				placeholder 	= "Beskrivning"
+				ng-maxlength	= "250"
+				max 			= 250>
+		</div>
+		<div class="col-sm-3 pull-right clearfix ">
+			<button
+				class="btn btn-primary pull-right"
+				type="button"
+				ng-click="saveDiceThrow()"
+				ng-disabled	="dice_form.$invalid">Slå</button>
+		</div>
+	</div>
+
+	<!-- Dice Errors -->
+	<div class="row">
+		<div class="col-sm-12 warning">
+			<p ng-show="error.diceError" class="text-warning">{{error.diceError}}</p>
+			<p ng-show="dice_form.nr_of_dices.$touched && dice_form.nr_of_dices.$invalid" class="text-danger">Tärningsantalet är ogiltigt.</p>
+			<p ng-show="dice_form.dice_mod.$touched && dice_form.dice_mod.$invalid" class="text-danger">Tärningsmodifikationen är ogiltig.</p>
+			<p ng-show="dice_form.input_dice_descr.$touched && dice_form.input_dice_descr.$invalid" class="text-danger">Beskrivningen innehåller för många tecken.</p>
+			<p ng-show="error.dice" class="text-danger">{{error.dice}}</p>
+		</div>
+	</div>
+</form>

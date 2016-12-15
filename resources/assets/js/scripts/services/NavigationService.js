@@ -3,9 +3,10 @@ angular.module('ShApp')
 .factory('NavigationService', function($http, $sce, $rootScope) {
 
     //$rootScope.navigation.url = {'title' : '', 'active': false, 'url':'#' };
-	var factory = {};
+	var vm = {};
+    $rootScope.navigation = [];
 
-    factory.set = function(navArray){
+    vm.set = function(navArray){
         /*$rootScope.navigation.url = url;
         $rootScope.navigation.title = title;
         $rootScope.navigation.active = active;*/
@@ -14,6 +15,17 @@ angular.module('ShApp')
         //$rootScope.$apply();
     }
 
-	return factory;
+    vm.addToMenu = function(theUrl, theTitle, ifActive)
+    {
+        var menuObj = {
+            'url' : theUrl,
+            'title' : theTitle,
+            'active' : ifActive
+        }
+        $rootScope.navigation.push(menuObj);
+    }
+
+
+	return vm;
 
 });

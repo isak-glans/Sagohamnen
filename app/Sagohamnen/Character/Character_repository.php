@@ -39,6 +39,8 @@ class Character_repository
 		$new_character->portrait_id 	= $formdata['portrait_id'];
 		$new_character->status 			= config('sh.character_status_applying');
 		$new_character->save();
+
+		return $new_character->id;
 	}
 
 	public function update_character($character, $formdata)
@@ -63,8 +65,9 @@ class Character_repository
 
 	public function find_in_campaign($id, $campaign_id)
 	{
-		return Character::select('id', 'name', 'user_id', 'campaign_id', 'status')->where(['id' => $id, 'campaign_id' => $campaign_id])->first();
+		return Character::select('id', 'name', 'user_id', 'campaign_id', 'status', 'portrait_id')->where(['id' => $id, 'campaign_id' => $campaign_id])->first();
 	}
+
 
 	public function playing_or_applying_in_campaign($campaign_id)
 	{

@@ -1,10 +1,11 @@
 angular.module('ShApp')
 
 // inject the Comment service into our controller
-.controller('ChronicleController', function($scope, $http, DbService, $routeParams, $sce, $location, ChronicleService, $route ) {
+.controller('ChronicleController', function($scope, $routeParams, $location, ChronicleService, entriesPerPage ) {
 
 	$scope.init = function() {
 		$scope.chronicles();
+		console.log(entriesPerPage);
 	}
 
 	$scope.chronicles = function() {

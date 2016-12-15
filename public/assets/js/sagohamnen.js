@@ -81,9 +81,17 @@ sagohamnenApp.config(function($routeProvider) {
             }
         }
     })
+    // View chronicles per page.
     .when("/campaign/:campaignId/chronicle/:pageNr", {
         templateUrl : "views/chronicles/chronicles.html",
-        controller  : 'ChronicleController'
+        controller  : 'chronicle/ChronicleController',
+        resolve : {
+            entriesPerPage : function(ChronicleService, $route) {
+                return ChronicleService.entriesPerPage({
+                    'campaignId'  : $route.current.params.characterId,
+                    'chronicleId' : $route.current.params.pageNr });
+            }
+        }
     })
     .when("/character/:characterId", {
         templateUrl : "views/characters/single_character.html",
@@ -94,10 +102,13 @@ sagohamnenApp.config(function($routeProvider) {
             }
         }
     })
-    .when("/edit_character/:characterId", {
+    .when("/edit_character/:id", {
         templateUrl : "views/characters/edit_character.html",
         controller  : 'EditCharacterCtrl',
         resolve : {
+            setupData : function(CharacterService, $route ){
+                return CharacterService.setupEditCharacter($route.current.params.id).$promise;
+            },
             portraitData : function(PortraitService){
                 return PortraitService.loadPortraits();
             }
@@ -107,6 +118,9 @@ sagohamnenApp.config(function($routeProvider) {
         templateUrl : "views/rpg/single_rpg.html",
         controller  : 'SingleRpgCtrl',
         resolve: {
+            checkUser: function(UserService){
+                UserService.checkIfLoggedIn();
+            },
             setupData: function(CampaignFactory,$route){
                 return CampaignFactory.setupRpg({id : $route.current.params.campaignId}).$promise;
             },
@@ -137,13 +151,10 @@ sagohamnenApp.config(['$httpProvider', function ($httpProvider) {
         return {
             'responseError': function(response) {
                 if(response.status === 401) {
-                    $location.path('/error/403'); // Replace with whatever should happen
+                    $location.path('/error/401');
                 }
                 else if (response.status === 403 ){
-                    // Ask the user to login?
-                    $rootScope.signedIn = false;
-                    $rootScope.$broadcast('loginChange', { logedIn: false });
-                    $location.path('/error/403'); // Replace with whatever should happen
+                    $location.path('/error/403');
                 }
                 else if(response.status === 500) {
                     $location.path('/error/500');
@@ -196,47 +207,37 @@ sagohamnenApp.constant('config', {
     rpgChatStyleDie					:1,
 
     maxChroniclesInRow              :10,
-});
-angular.module('ShApp')
 
-// inject the Comment service into our controller
-.controller('ChronicleController', function($scope, $http, DbService, $routeParams, $sce, $location, ChronicleService, $route ) {
+    // How many chats the user can do
+    // before he/she is considered spamming.
+    chatSpamNr                     :30,
+    // The max length of a chat entry.
+    chatMaxLength                   :500,
 
-	$scope.init = function() {
-		$scope.chronicles();
-	}
-
-	$scope.chronicles = function() {
-		var campaignId 	= $routeParams.campaignId;
-		var pageNr 		= $routeParams.pageNr;
-		/*console.log($routeParams);
-		console.log(campaignId, pageNr);*/
-		ChronicleService.chroniclesPerPage(campaignId,pageNr).then(function successCallback(response) {
-			console.log(response);
-			$scope.chronicles = response.chronicles;
-			$scope.campaign = response.campaign;
-		}, function errorCallback(response) {
-
-		});
-	}
+    dicesMaxNr                      :100,
+    dicesTypes                      :[4,6,8,10,12,20,100],
+    dicesModMax                     :1000,
+    dicesModMin                     :-1000,
+    dicesDescriptionMaxLength       :250,
 });
 
 angular.module('ShApp')
 
 // inject the Comment service into our controller
-.controller('MainController', function($scope, UserService, PortraitService, $rootScope, SessionFactory) {
+.controller('MainController', function($scope, UserService, PortraitService, $rootScope, SessionFactory, $location) {
 
-	$scope.init = function(){
-		setTimeout(function() {
-	        login();
-		},1 );
-	}
+	$scope.$on('$viewContentLoaded', function() {
+		// Get current page.
+		// Send this to userservice.
+		var page = $location.url().substring(1);
+
+    	UserService.checkIfLoggedIn(page);
+	});
 
     function login(){
-        UserService.login();
+        UserService.checkIfLoggedIn();
     };
 
-    $scope.init();
 });
 
 
@@ -436,38 +437,119 @@ angular.module('ShApp')
 });
 angular.module('ShApp')
 
-.factory('CharacterService', function($http, $sce,  DbService) {
-	var factory = {};
+.factory('CharacterService', function($resource) {
+	var vm = {};
 
-	factory.getInfo = function(characterId) {
+	var Character = $resource('/api/character/:characterId',{},{
+		setupEdit : { method : "GET", url : "/api/character/:characterId/edit" },
+		changeStatus : {method: "GET", url: "/api/character/:id/status/:status"},
+    	update : {method: "PUT", url: "/api/character/:id" }
+	});
+
+	vm.getInfo = function(characterId) {
 
 	}
 
-	return factory;
+	vm.update = function(id, postData){
+		return Character.update({id: id}, postData).$promise;
+	}
+
+	vm.changeStatus = function(characterID, newStatus){
+		return Character.changeStatus({id: characterID, status: newStatus}).$promise;
+	}
+
+	vm.setupEditCharacter = function(id) {
+		return Character.setupEdit({'characterId' : id});
+	}
+
+	return vm;
 });
 angular.module('ShApp')
 
-.factory('ChronicleService', function($http, $sce, DbService) {
+.factory('ChatService', function($resource, config) {
 
-	var factory = {};
+	var vm = {};
 
-	factory.chroniclesPerPage = function(campaignId,pageNr) {
-		var result;
+	var Chat = $resource('/api/rpg_chat/:campaignId',{},{
+		newestChats : { method : "GET", url : "/api/rpg_update/:campaignId/newest/:chatId/:chronicleId" },
+    	storeDices : { method: "POST", url : "/api/rpg/role_dice"}
+	});
 
-		return DbService.chroniclesPerPage(campaignId, pageNr).then(function successCallback(response) {
-            //console.log(response);
-            return response.data;
-        }, function errorCallback(response) {
-            if(response.status == 404) {
-                $location.path("error/404");
-            }
-        });
+	vm.diceThrowValid = function(nr, type, mod, ob, description){
+		if (nr < 1)
+			return "Antalet tärningar är för litet.";
+		if (nr > config.dices_max_nr)
+			return "Antalet tärningar får max vara 100 stycken.";
+    	if ( config.dicesTypes.indexOf(type) == -1 )
+    		return "Tärningtypen ej tillåten.";
+    	if (mod < config.dicesModMin || mod > config.dicesModMax )
+    		return "Tärningsmodifikationen är för hög eller låg.";
+    	if (ob < 0 || ob > 1 ) // This should be a boolean
+    		return "Alternativet OB har fel format.";
 
-        //return result;
+    	if (!!description && description.length > config.dicesDescriptionMaxLength)
+    		return "Beskrivningen innehåller för många tecken.";
+
+    	return "";
 	}
 
+	vm.storeDiceThrow = function(campaignId, nr, type, mod, ob, description){
+		var chatDice = {};
+		chatDice.campaign_id 	= campaignId;
+    	chatDice.dice_nr 		= nr;
+    	chatDice.dice_type 		= type;
+    	chatDice.dice_ob 		= ob;
+    	chatDice.dice_mod 		= mod;
+    	chatDice.dice_description = description;
 
-	return factory;
+    	return Chat.storeDices({}, chatDice).$promise;
+	}
+
+	vm.chatValid = function(message ){
+		var error = "";
+		if (message.length > config.chatMaxLength) return "Chatinlägget är för långt.";
+		if (message.length < 1) return "Inlägget är tomt";
+		return error;
+	}
+
+	vm.storeChat = function(message, campaignId, userId) {
+		var chat = new Chat({id: campaignId });
+		chat.user_id		= userId;
+		chat.text 			= message;
+		chat.campaign_id 	= campaignId;
+		chat.type		 	= config.rpgChatStyleMessage;
+		return chat.$save();
+	}
+
+	return vm;
+
+});
+angular.module('ShApp')
+
+.factory('ChronicleService', function($resource, entriesPerPage) {
+
+	var vm = {};
+
+    var Chronicle = $resource('/api/chronicle/:campaignId',{},{
+        // campaign/{campaign_id}/page/{page_nr}
+        entriesPerPage : { method : "GET", url : "/api/campaign/:campaignId/page/:chronicleId" },
+    });
+
+    vm.entriesPerPage = function(campaignID, pageNr){
+        Chronicle.entriesPerPage({ 'campaignId' : campaignID, 'chronicleId' : pageNr}).$promise;
+    }
+
+    vm.storeEntry = function(campaignId, text, characterId){
+        var chronicle = new Chronicle({id: campaignId});
+        chronicle.text          = text;
+        chronicle.campaign_id   = campaignId;
+        chronicle.character_id  = characterId;
+
+        var result = chronicle.$save();
+        return result;
+    }
+
+	return vm;
 
 });
 angular.module('ShApp')
@@ -536,9 +618,10 @@ angular.module('ShApp')
 .factory('NavigationService', function($http, $sce, $rootScope) {
 
     //$rootScope.navigation.url = {'title' : '', 'active': false, 'url':'#' };
-	var factory = {};
+	var vm = {};
+    $rootScope.navigation = [];
 
-    factory.set = function(navArray){
+    vm.set = function(navArray){
         /*$rootScope.navigation.url = url;
         $rootScope.navigation.title = title;
         $rootScope.navigation.active = active;*/
@@ -547,7 +630,18 @@ angular.module('ShApp')
         //$rootScope.$apply();
     }
 
-	return factory;
+    vm.addToMenu = function(theUrl, theTitle, ifActive)
+    {
+        var menuObj = {
+            'url' : theUrl,
+            'title' : theTitle,
+            'active' : ifActive
+        }
+        $rootScope.navigation.push(menuObj);
+    }
+
+
+	return vm;
 
 });
 
@@ -589,10 +683,14 @@ angular.module('ShApp')
 });
 angular.module('ShApp')
 
-.factory('RpgService', function(RpgChatFactory, UserService, config, $rootScope, PortraitService, $q, ChronicleFactory) {
+.factory('RpgService', function(UserService, config, $rootScope, $resource, PortraitService) {
 
 	var factory = {};
-	//factory.portraits = [];
+
+	var RpgChat = $resource('/api/rpg_chat/:campaignId',{},{
+		newestChats : { method : "GET", url : "/api/rpg_update/:campaignId/newest/:chatId/:chronicleId"}
+	});
+
 	factory.onlineUsersId = [];
 	factory.onlineUsers = [];
 	factory.users = {
@@ -603,7 +701,6 @@ angular.module('ShApp')
 	factory.characters = [];
 	factory.portraits = [];
 	factory.info = {
-		readyForLoop	: false,
 		readyForLoop	: false,
 		updateCounter 	: 0,
 		updateDelay		: 3000,
@@ -625,10 +722,12 @@ angular.module('ShApp')
 		factory.info.lastReadChatId = 0;
 		factory.info.lastReadChronicleId = 0;
 
-		// Store importent info.
+		// Store important info.
 		factory.info.campaignId = setupData.campaign.id;
 		factory.info.gmId		= setupData.campaign.user_id;
 		factory.characters 		= setupData.characters;
+
+
 
 		// Save data about all users who play or are GM,
 		// and store in the service.
@@ -637,17 +736,21 @@ angular.module('ShApp')
 		// Fetch the portraits for characters.
 		giveCharactersPortraits(factory.characters);
 
+
 		// Run the shit!
 		chatLoop();
 
 	}
 
-	factory.myCharacters = function(){
+	factory.my_characters = function(){
 		var myCharacters = [];
+
+		// If rpg have no characters.
+		if (factory.characters.length == 1 ) return myCharacters;
 
 		// If user is gm, add an extra option for "no" character.
 		if (meGm() ){
-			myCharacters.push( {id:"0", name:"Ingen", portrait_id:0});
+			myCharacters.push( {id:"0", name:"Berättarröst", portrait_id:0});
 		}
 
 		// Collect those characters that are the user´s.
@@ -660,13 +763,86 @@ angular.module('ShApp')
 		return myCharacters;
 	}
 
-	factory.getNewest = function() {
+	factory.stopPulling = function(){
+		clearInterval(timerId);
+	}
+
+	factory.interpret_stored_chat_response = function(response) {
+		var chatEntry = {};
+		if (!!response.id && !!response.text && !!response.created_at && !!response.user_id ) {
+            chatEntry.id           = response.id;
+            chatEntry.text         = response.text;
+            chatEntry.date         = response.created_at;
+            chatEntry.user_id      = response.user_id;
+            // Format result.
+            chatEntry = format_chat_from_db(chatEntry);
+            return chatEntry;
+        } else return null;
+	}
+
+	factory.format_chronicle = function( campaignId, text, characterId, info ){
+		var entry = {
+            'id' : info.id,
+            'text' : text,
+            'campaign_id' : campaignId,
+            'character_id' : characterId,
+            'user_id'       : info.user_id,
+        }
+
+        // Add Character info if there is some.
+        if (entry.character_id > 0){
+        	entry.character =  { status : info.chararacter_status, 'portrait_id' : info.character_portrait_id};
+        }
+
+		return format_chronicle_from_db(entry);
+	}
+
+	factory.doEntryExist = function(oldEntries, newEntry)
+	{
+		var exists = false;
+		oldEntries.forEach(function(row){
+			if (row.id == newEntry.id) {
+				exists = true;
+				return true;
+			}
+		});
+
+		return exists;
+	}
+
+	// ===================================
+	// PRIVATE FUNCTIONS
+	// ===================================
+
+	var chatLoop = function () {
+
+		// Kill possible old timer.
+		clearTimeout(timerId);
+
+	    function updateLoop() {
+	        factory.info.updateCounter += 1;
+	        if (factory.info.updateCounter == 5)
+	        	factory.info.updateDelay = 5000;
+	        if (factory.info.updateCounter == 10)
+	        	factory.info.updateDelay = 10000;
+	        if (factory.info.updateCounter == 50)
+	        	factory.info.updateDelay = 60000;
+
+	        getNewest();
+
+	        // Make this function loop.
+	        timerId = setTimeout(updateLoop, factory.info.updateDelay)
+	    }
+	    updateLoop();
+	}
+
+	function getNewest() {
 		var lastReadChatId = factory.info.lastReadChatId;
 		var lastRecievedChronicleId = factory.info.lastReadChronicleId;
 		var campaignId = factory.info.campaignId;
 
 		// Fetch updates.
-		RpgChatFactory.newestChats({
+		RpgChat.newestChats({
 			'campaignId'	: campaignId,
 			'chatId' 		: lastReadChatId,
 			'chronicleId'	: lastRecievedChronicleId }).$promise.then(function(response){
@@ -675,61 +851,6 @@ angular.module('ShApp')
 			console.log(error);
 		});
 	}
-
-	factory.storeChat = function(message, campaignId) {
-		factory.info.updateCounter = 0;
-		storeRpgChat(message, campaignId, config.rpgChatStyleMessage).then(function(){
-			factory.getNewest();
-		});
-	}
-
-	factory.storeChronicle = function(message, characterId) {
-		factory.info.updateCounter = 0;
-		factory.info.chronicleError = "";
-
-		var chronicle = new ChronicleFactory;
-		chronicle.text 			= message;
-		chronicle.campaign_id 	= factory.info.campaignId;
-		chronicle.character_id 	= characterId;
-
-		return chronicle.$save();
-	}
-
-	factory.storeDie = function(message, campaignId, type) {
-		//toreRpgChat(message, campaignId, config.rpgChatStyleDie);
-
-		//RpgChatFactory.storeDices(['campaignId' => campaignId]);
-
-	}
-
-	factory.stopPulling = function(){
-		clearInterval(timerId);
-	}
-
-	factory.roleOrdinaryDices = function(nr, type, modType, mod, description){
-		var campaignId = factory.info.campaignId;
-    	var chatDices = new RpgChatFactory;
-    	chatDices.campaign_id 	= campaignId;
-    	chatDices.dice_nr 		= nr;
-    	chatDices.dice_type 	= type;
-    	chatDices.dice_mod_type = modType;
-    	chatDices.dice_mod 		= mod;
-    	chatDices.dice_description = description;
-    	RpgChatFactory.storeDices({}, chatDices).$promise.then(function(res) {
-    		console.log(res);
-    	});
-
-    	/*'campaign_id'        => 'required|numeric|min:1',
-            'dice_nr'            => 'required|numeric|min:1|max:100',
-            'dice_type'          => 'required|numeric|min:4|max:100',
-            'dice_mod_type'      => 'required|numeric|min:0|max:1',
-            'dice_mod'           => 'required|numeric|min:0|max:1000',
-            'dice_description'*/
-    }
-
-	// ===================================
-	// PRIVATE FUNCTIONS
-	// ===================================
 
 	var callback_Updates = function(response){
 		var newChronicles = [];
@@ -757,39 +878,15 @@ angular.module('ShApp')
 
 		// If new chronicles
 		if (latestChronicleId > factory.info.lastReadChronicleId) {
-
 			// Remember if new chronicles arrived.
 			factory.info.lastReadChronicleId = latestChronicleId;
 
-			// The new chronicles.
 			newChronicles = response.newest_chronicles.chronicles;
-			// Since DB sort by descending order, reverse it
-			// so last entry comes at bottom.
-			newChronicles.reverse();
-
-			// Attach info.
 			newChronicles.forEach(function(row){
-
-				// If GM add style class.
-				if (row.user_id == factory.info.gmId)
-					row.styleClass = "entry-chronicle-gm";
-
-				// Attach portrait url:s
-				if (row.character !== null){
-					// Add status classes.
-					if (row.character.status == config.charStatusPlaying )
-						row.styleClass = "entry-chronicle-player";
-					else if (row.character.status == config.charStatusNpc )
-						row.styleClass = "entry-chronicle-npc";
-					else row.styleClass = "";
-
-					row.character.portrait = findPortrait(row.character.portrait_id).thumbnail;
-					//PortraitService.all_portraits[row.character.portrait_id].thumbnail;
-				}
-
-				// Find user
-				row.name = findUser(row.user_id).name;
+				row = format_chronicle_from_db(row);
 			});
+
+			newChronicles.reverse();
 		}
 
 		// If new chats.
@@ -797,27 +894,14 @@ angular.module('ShApp')
 			factory.info.lastReadChatId = latestChatId;
 			factory.info.updateCounter = 0;
 
-			// Get the new chats.
 			newChats = response.newest_chats.chats;
-
-			// Make some changes
 			newChats.forEach(function(row){
-				// Convert string to date.
-	            row.date = new Date(row.date);
-
-	            // Add username, wich was fetched with setupData.
-	            row.name = findUser(row.user_id).name;
-
-	            // if dices results
-	            if (row.type == config.rpgChatStyleDie) {
+				row = format_chat_from_db(row);
+	            // Fetch dices.
+	            if (row.type == config.rpgChatStyleDie)
 	            	newDices.push(row);
-	            }
 	        });
 
-			// Make sure the list of chats is not too large.
-	        //TrimNrChats();
-
-	        // Make newest appear last in list.
 	        newChats.reverse();
 		}
 
@@ -830,6 +914,38 @@ angular.module('ShApp')
 			'onlineUsersChanged' : onlineUsersChanged });
 	}
 
+	function format_chat_from_db(chat){
+		chat.date = new Date(chat.date);
+        // Add username, wich was fetched with setupData.
+        chat.name = findUser(chat.user_id).name;
+        return chat;
+	}
+
+	function format_chronicle_from_db(chronicle)
+	{
+		// If GM add style class.
+		if (chronicle.user_id == factory.info.gmId)
+			chronicle.styleClass = "entry-chronicle-gm";
+
+		// Attach portrait url:s
+		if (!!chronicle.character){
+			// Add status classes.
+			if (chronicle.character.status == config.charStatusPlaying )
+				chronicle.styleClass = "entry-chronicle-player";
+			else if (chronicle.character.status == config.charStatusNpc )
+				chronicle.styleClass = "entry-chronicle-npc";
+			else chronicle.styleClass = "";
+
+			chronicle.character.portrait = findPortrait(chronicle.character.portrait_id);
+		}
+
+		// Find user
+		chronicle.name = findUser(chronicle.user_id).name;
+
+		return chronicle;
+	}
+
+
 	var TrimNrChats = function() {
         var totalNr = factory.chats.length;
         var maxNrChats = 40;
@@ -838,39 +954,6 @@ angular.module('ShApp')
             factory.chats.splice(0,nrToRemove);
         }
     }
-
-	var chatLoop = function () {
-
-		// Kill possible old timer.
-		clearTimeout(timerId);
-
-	    function updateLoop() {
-	        factory.info.updateCounter += 1;
-	        if (factory.info.updateCounter == 5)
-	        	factory.info.updateDelay = 5000;
-	        if (factory.info.updateCounter == 10)
-	        	factory.info.updateDelay = 10000;
-	        if (factory.info.updateCounter == 50)
-	        	factory.info.updateDelay = 60000;
-	        //console.log("Hämtar inlägg. counter: " + factory.info.updateCounter + " and delay: " + factory.info.updateDelay );
-	        //console.log(factory.info.updateCounter);
-	        factory.getNewest();
-
-
-	        // Make this function loop.
-	        timerId = setTimeout(updateLoop, factory.info.updateDelay)
-	    }
-	    updateLoop();
-	}
-
-	var storeRpgChat = function(message, campaignId, type) {
-		var chat = new RpgChatFactory();
-		chat.user_id		= UserService.currentUser.id;
-		chat.text 			=  message;
-		chat.campaign_id 	= campaignId;
-		chat.type		 	= type;
-		return chat.$save();
-	}
 
     var findUser = function(userId)
     {
@@ -906,7 +989,7 @@ angular.module('ShApp')
     	return ok;
     }
 
-    var findPortrait = function(portraitID)
+    var findPortrait = function(portraitID, thumbnail = true)
     {
     	var thePorrait;
 
@@ -915,7 +998,7 @@ angular.module('ShApp')
     		if (portrait.id == portraitID)
 	    		thePorrait = portrait;
 	    	});
-	    	return thePorrait;
+	    	return thumbnail ? thePorrait.thumbnail : thePorrait.medium;
     	} else {
     		console.log("Porträtten kunde inte hittas.");
     		return null;
@@ -926,8 +1009,8 @@ angular.module('ShApp')
     {
     	characters.forEach(function(character){
 			character.portrait = {
-				'thumbnail': findPortrait(character.portrait_id).thumbnail,
-				'medium' : findPortrait(character.portrait_id).medium};
+				'thumbnail': findPortrait(character.portrait_id),
+				'medium' : findPortrait(character.portrait_id, false)};
     	});
     }
 
@@ -935,11 +1018,10 @@ angular.module('ShApp')
     	return factory.info.gmId == UserService.currentUser.id;
     }
 
-
-
 	return factory;
 
 });
+
 angular.module('ShApp')
 
 .factory('TestService', function($q) {
@@ -982,63 +1064,107 @@ angular.module('ShApp')
 });
 angular.module('ShApp')
 
-.factory('UserService', function($http, $rootScope, UserFactory, $location, SessionFactory) {
+.factory('UserService', function($rootScope, $resource, $location, SessionFactory) {
+	console.log("UserService läses in.");
+	var vm = {};
+	vm.csrf = "";
+	vm.currentUser = {name : "", id: 0, loggedIn : false };
 
-	var factory = {};
-	factory.csrf = "";
-	factory.currentUser = {name : "", id: 0, loggedIn : false };
+	var User = $resource('/api/user/:id',{},{
+		setupEditUser : {method: "GET", url: "/api/user/:id/edit"},
+    	updateA : {method: "PUT", url: "/api/user/:id"},
+    	loadUser : {method : "GET", url: '/api/username_and_id' },
+    	logIn : {method : "GET", url: '/api/username_and_id' },
+    	logOut : {method : "GET", url: '/logout' }
+	});
 
-	factory.login = function() {
-		// If userId exist in localstorage.
-		if ( !!SessionFactory.getKey('userId') ) {
-			factory.currentUser.id = SessionFactory.getKey('userId');
-			factory.currentUser.name = SessionFactory.getKey('userName');
-			factory.currentUser.loggedIn = true;
-			updateUserMenu();
+	vm.checkIfLoggedIn = function(currentPage) {
+		console.log("INne i checkIfLoggedIn");
+		// User logged in?
+		if (! vm.currentUser.loggedIn) {
+			console.log("Userserives säger att jag inte är inloggad.");
+			// If not check Localstorage.
+			if ( !!SessionFactory.getKey('userId') ) {
+				console.log("currentUser not logged in but getting from local session.");
+				// Here I am using local session, because
+				// if user refresh a page, all service data
+				// will be lost. But local session will remain
+				// until user close tab/browser.
+				vm.currentUser.id = SessionFactory.getKey('userId');
+				vm.currentUser.name = SessionFactory.getKey('userName');
+				vm.currentUser.loggedIn = true;
+				console.log(vm.currentUser);
+			// If recently logged in the user will
+			// be directed to index, which means
+			// current page will be empty.
+			} else if (currentPage == '') {
+				console.log("Now ask server");
+				// Only ask the server for authentication
+				// when user asks to log in.
+				ask_server_if_user_logged_in();
+			}
 		} else {
-			// User do not exist in local storage.
-			// Therefor get it from the server.
-			loadUserFromServer();
+			console.log("My id "+ vm.currentUser.id);
 		}
+
+		// Always update the user menu for each page load.
+		updateUserMenu();
 	}
 
-	factory.setUser = function(user){
-		factory.currentUser = user;
+	vm.setUser = function(user){
+		vm.currentUser = user;
 	}
 
-	factory.logout = function() {
+	vm.logout = function() {
 		console.log("Loggar ut");
-		UserFactory.logOut().$promise.then(function(response){
-			factory.currentUser = {name : "", id: 0, loggedIn: false};
-
-            SessionFactory.deleteKey('userId');
-            SessionFactory.deleteKey('userName');
-
-			factory.updateLogin();
+		User.logOut({}, function(response){
+			console.log("User have been logged out on server.");
+			vm.setLogout();
+			updateUserMenu();
 			$location.path("/home");
-		}, function(error) {
-			console.log(error);
 		});
 	};
 
-	factory.updateLogin = function(){
-		$rootScope.$broadcast('loginChange', {});
+	// Call this when user get a 403.
+	vm.setLogout = function() {
+		vm.currentUser.id = 0;
+        vm.currentUser.name = "";
+        vm.currentUser.loggedIn = false;
+		if ( !!SessionFactory.getKey('userId') && !!SessionFactory.getKey('userName')) {
+			SessionFactory.deleteKey('userId');
+            SessionFactory.deleteKey('userName');
+		}
 	}
 
-	function loadUserFromServer(){
-		console.log("Laddar userinfo froms server");
-		UserFactory.loadUser().$promise.then(function(response){
-            // Store result as service property.
-            factory.currentUser = {name :response.name, id: response.id, loggedIn : response.signed_in};
+	/* ========================================
+			Private methods
+	   ======================================= */
 
-            // Save user in local storage.
+	function ask_server_if_user_logged_in(){
+		console.log("Asking server.");
+		User.loadUser().$promise.then(function(response){
+			console.log("Serverser responded", response);
+			// Check if missing JSON columns.
+			if (!response.hasOwnProperty('name') || !response.hasOwnProperty('id')
+				|| !response.hasOwnProperty('signed_in')) {
+				$location.path("/500");
+			}
+
+            // Signed in?
             if (response.signed_in){
-            	console.log("Fyller i localstorage nu...");
+            	console.log("Nu sätts currentUser");
+            	// Save user in local session.
+            	vm.currentUser.name = response.name;
+            	vm.currentUser.id = response.id;
+            	vm.currentUser.loggedIn = true;
             	SessionFactory.setKey('userId', response.id);
             	SessionFactory.setKey('userName', response.name);
+            } else {
+            	// User not logged in.
+            	vm.setLogout();
             }
-
-			updateUserMenu();
+            // Update view
+            updateUserMenu();
         }, function(error) {
         	console.log(error);
         });
@@ -1046,11 +1172,10 @@ angular.module('ShApp')
 
 	function updateUserMenu()
 	{
-		// Update the user menu button.
-    	$rootScope.$broadcast('loginChange', {});
+		$rootScope.$broadcast('loginChange', {});
 	}
 
-	return factory;
+	return vm;
 
 });
 angular.module('ShApp')
@@ -1356,7 +1481,7 @@ angular.module('ShApp')
 angular.module('ShApp')
 
 // inject the Comment service into our controller
-.controller('EditCharacterCtrl', function($scope, $location, $routeParams, CharacterFactory, config, $mdDialog) {
+.controller('EditCharacterCtrl', function($scope, $location, $routeParams, config, $mdDialog, setupData, CharacterService) {
 
 	$scope.form = {};
 	$scope.portrait = {id : 0, url: ""};
@@ -1364,29 +1489,15 @@ angular.module('ShApp')
 	//var status = { 0=>'Arkiverad', 1=>'Ansöker', 2=>'Spelare', 3=>'SLP'};
 
 	$scope.setup = function () {
-		var characterId = $routeParams.characterId;
-    	if( characterId == null) $location.path("error/404");
+		$scope.campaignId = setupData.id;
+		setupData.created_at = new Date( setupData.created_at );
+		setupData.updated_at = new Date( setupData.updated_at );
 
-    	var theCharacter = CharacterFactory.get({id: characterId}, function(response) {
+		$scope.portrait.id 	= setupData.portrait.id;
+		$scope.portrait.url 	= setupData.portrait.medium;
 
-    		// If character is archived then user are not allowed to edit it.
-    		if (response.can_edit == false){
-    			$location.path("error/403");
-    		}
-
-    		$scope.campaignId = response.id;
-			response.created_at = new Date( response.created_at );
-			response.updated_at = new Date( response.updated_at );
-
-			$scope.portrait.id 	= response.portrait.id;
-			$scope.portrait.url 	= response.portrait.medium;
-
-			$scope.headline = angular.copy(response.name);
-			$scope.form = response;
-	      //console.log(response);
-	    }, function(response) {
-	      if(response.status == 404) $location.path("error/404");
-	    } );
+		$scope.headline = angular.copy(setupData.name);
+		$scope.form = setupData;
 	}
 
 	$scope.saveEdit = function(){
@@ -1401,13 +1512,10 @@ angular.module('ShApp')
 		postData.excerpt 			= $scope.form.excerpt;
 		//postData.campaign_id		= $scope.form.campaign.id;
 
-		CharacterFactory.update({id: $scope.form.id}, postData, function(response) {
-			//console.log(response);
+		var result = CharacterService.update($scope.form.id, postData);
+		result.then(function(response){
 			$location.path("character/"+postData.id);
-	    }, function(response) {
-    		//console.log(response);
-	      //if(response.status == 404) $location.path("error/404");
-	    } );
+		});
 
 	}
 
@@ -1428,12 +1536,16 @@ angular.module('ShApp')
 
         // Confirm delete.
         $mdDialog.show(confirm).then(function() {
-        	CharacterFactory.changeStatus({id: $scope.form.id, status: config.charStatusArchived} , function(response) {
+        	// Ask server to change status.
+        	var characterID = $scope.form.id;
+        	var newStatus = config.charStatusArchived;
+
+        	CharacterService.changeStatus(characterID, newStatus).then(function(response){
+        		$location.path( "character/" + characterID );
+        	});
+        	/*CharacterFactory.changeStatus({id: $scope.form.id, status: config.charStatusArchived} , function(response) {
         		$location.path("character/"+$scope.form.id);
-			}, function(response){
-				console.log("failure");
-				$location.path("error/500");
-			});
+			});*/
         }, function() {
              console.log("Nope");
         });
@@ -1443,7 +1555,7 @@ angular.module('ShApp')
 angular.module('ShApp')
 
 // inject the Comment service into our controller
-.controller('SingleCharacterCtrl', function($scope, singleCharacter, config, NavigationService, CharacterFactory ) {
+.controller('SingleCharacterCtrl', function($scope, singleCharacter, config, NavigationService, CharacterService ) {
 
 	$scope.form = {};
 	$scope.showConfirmArchive = false;
@@ -1479,11 +1591,12 @@ angular.module('ShApp')
 	}
 
 	var changeCharStatus = function(newStatus){
-		CharacterFactory.changeStatus({id: $scope.form.id, status: newStatus} , function(response) {
-			setStatusText(newStatus);
-		}, function(response){
-			console.log("failure");
-		})
+
+		var characterID = $scope.form.id;
+
+    	CharacterService.changeStatus(characterID, newStatus).then(function(response){
+    		setStatusText(newStatus);
+    	});
 	}
 
 	$scope.showAlt = function() {
@@ -1494,10 +1607,38 @@ angular.module('ShApp')
 		changeCharStatus(config.charStatusApplying);
 	}
 
+	$scope.setNpc = function() {
+		changeCharStatus(config.charStatusNpc);
+	}
+
 	$scope.setup();
 });
 angular.module('ShApp')
-.controller('SingleRpgCtrl', function($scope, setupData, NavigationService, RpgService ) {
+
+// inject the Comment service into our controller
+.controller('ChronicleController', function($scope, $routeParams, $location, ChronicleService, entriesPerPage ) {
+
+	$scope.init = function() {
+		$scope.chronicles();
+		console.log(entriesPerPage);
+	}
+
+	$scope.chronicles = function() {
+		var campaignId 	= $routeParams.campaignId;
+		var pageNr 		= $routeParams.pageNr;
+		/*console.log($routeParams);
+		console.log(campaignId, pageNr);*/
+		ChronicleService.chroniclesPerPage(campaignId,pageNr).then(function successCallback(response) {
+			console.log(response);
+			$scope.chronicles = response.chronicles;
+			$scope.campaign = response.campaign;
+		}, function errorCallback(response) {
+
+		});
+	}
+});
+angular.module('ShApp')
+.controller('SingleRpgCtrl', function($scope, setupData, NavigationService, RpgService, ChatService, ChronicleService ) {
 
     $scope.chats = [];
     $scope.dices = [];
@@ -1507,68 +1648,151 @@ angular.module('ShApp')
     $scope.myCharacters = [];
     $scope.input = {chat:"", chronicle:""};
     $scope.campaginData;
+    $scope.error = {
+        chronicle : "",
+        chat : "",
+        dice : ""
+    }
 
     // I think I need it for the pick character to say.
     $scope.characterItem = {};
+    $scope.diceTypeOptions = [
+        {name : '1T4', value : 4},
+        {name : '1T6', value : 6},
+        {name : '1T8', value : 8},
+        {name : '1T10', value : 10},
+        {name : '1T12', value : 12},
+        {name : '1T20', value : 20},
+        {name : '1T100', value : 100} ]
 
 	$scope.init = function(){
-        console.log("Nu körs init.");
         var campaign = setupData.campaign;
         $scope.campaginData = campaign;
 
 		// Update the navigation.
-        NavigationService.set([{"url" : "/#/campaign/" + campaign.id, 'title': campaign.name, 'active' : false},
-        	{"url" : "/#", 'title': 'Rollspel', 'active' : true}]);
+        NavigationService.addToMenu("/#/campaign/" + campaign.id, campaign.name, false);
+        NavigationService.addToMenu("/#", 'Rollspel', true);
 
-        // Iniate the RPG service.
+        // Initiate the RPG service.
         RpgService.init(setupData);
 
+        // Find active users.
         $scope.activUsers = setupData.users;
 
-        // Fetch those characters that are mine.
-        $scope.myCharacters = RpgService.myCharacters();
+        // Wait some seconds for userService to find user in server,
+        // if user refresh rpg room.
+        setTimeout(function(){
 
-        // Set selected character.
-        if ($scope.myCharacters.length > 0)
-        {
-            $scope.characterItem.selectedItem = $scope.myCharacters[0];
-        }
+        },100);
+
+        // Fetch those characters that are mine.
+            $scope.myCharacters = RpgService.my_characters();
+            console.log("Mina karaktärer", $scope.myCharacters);
+
+            // Set selected character.
+            if ($scope.myCharacters.length > 0)
+            {
+                $scope.characterItem.selectedItem = $scope.myCharacters[0];
+            }
+
+            setSelectedOptions();
+
+
 
 	}
 
-    $scope.sendChat = function(){
-        //console.log("Skickar " + $scope.input.chat);
-        var message = $scope.input.chat;
-        var campaignId = $scope.campaginData.id;
-        if(message == "")return;
 
-        $scope.input.chat = "";
-        RpgService.storeChat(message,campaignId);
+    function setSelectedOptions(){
+        $scope.input.selectDiceType = {name: "1T6", value: 6 };
     }
 
     $scope.saveChronicleEntry = function()
     {
-        var chroEntry = $scope.input.chronicle.text;
-        var pickedChar = $scope.characterItem.selectedItem;
+        var campaignId      = setupData.campaign.id;
+        var text            = $scope.input.chronicle.text;
+        var characterId     = $scope.characterItem.selectedItem.id;
 
         // If no character picked
-        if (pickedChar == 0) pickedChar = null;
+        if (characterId == 0) characterId = null;
 
-        RpgService.storeChronicle(chroEntry, pickedChar.id).then(function(response){
-
-            // Check if user is spamming.
-            if (response.stored_id == null){
-                // User is spamming.
+        // Store it in DB.
+        var result = ChronicleService.storeEntry(campaignId, text, characterId);
+        result.then(function(response){
+            // Spamming?
+            if (response.spamming){
                 $scope.chronicleError = RpgService.messages.spamingChronicle;
-            } else {
-                // Not spamming.
-                $scope.chronicleError = "";
-                $scope.input.chronicle.text = "";
-                RpgService.getNewest();
+                return;
+            }
+            // If important info returned.
+            if (response.info != null ){
+                // Add portrait and more..
+                var entry = RpgService.format_chronicle(campaignId, text, characterId, response.info);
+                if(!!entry){
+                    // Display it.
+                    $scope.chronicles.push(entry);
+                }
             }
 
-        }).catch( function(error){
-            console.log(error);
+            $scope.chronicleError = "";
+            $scope.input.chronicle.text = "";
+
+        });
+    }
+
+    $scope.storeChat = function(){
+        var message     = $scope.input.chat;
+        var campaignId  = setupData.campaign.id;
+
+        $scope.error.chat = "";
+        $scope.error.chat = ChatService.chatValid(message);
+        if($scope.error.chat != "")
+            return;
+
+        $result = ChatService.storeChat(message,campaignId);
+        $result.then(function(response){
+            var chat = RpgService.interpret_stored_chat_response(response);
+            if( !!chat ) {
+                $scope.chats.push(chat);
+                $scope.input.chat = "";
+            }
+        }, function(error){
+            if (error.status == 429){
+                $scope.error.chat = "Var god vänta med att skriva ett chatinlägg tills en annan spelare gjort ett.";
+            }
+        });
+    }
+
+    $scope.saveDiceThrow = function(){
+        var campaignId = setupData.campaign.id;
+        var nrOfDices   = $scope.input.dice.nr;
+        var diceType    = $scope.input.selectDiceType.value;
+        var diceMod     = $scope.input.dice.mod;
+        var diceDescription  = $scope.input.dice.description;
+        var ob = $scope.input.dice.ob;
+
+        // Validate dices.
+        $scope.error.dice = "";
+        $scope.error.dice = ChatService.diceThrowValid(nrOfDices, diceType, diceMod, ob, diceDescription);
+        if ($scope.error.dice != ""){
+            return;
+        }
+
+        // Store it.
+        ChatService.storeDiceThrow(campaignId, nrOfDices, diceType, diceMod, ob, diceDescription).then(function(response){
+            // Interpret and add username.
+            var dice = RpgService.interpret_stored_chat_response(response);
+            if( !!dice ) {
+                // Add to both chats and dice array.
+                $scope.dices.push(dice);
+                $scope.chats.push(dice);
+                // Reset description input.
+                $scope.input.dice.description = "";
+            }
+        }, function(error){
+            console.log("Här blev det ett fel");
+            if (error.status == 429){
+                $scope.error.dice = "Var god vänta med att slå en tärning tills en annan spelare slagit ett.";
+            }
         });
     }
 
@@ -1577,20 +1801,25 @@ angular.module('ShApp')
         // If new dices
         if (response.newDices.length > 0) {
             response.newDices.forEach(function(row){
-                $scope.dices.push(row);
+                if ( ! RpgService.doEntryExist($scope.dices, row) )
+                    $scope.dices.push(row);
             });
         }
         // If new chats
         if (response.newChats.length > 0) {
             response.newChats.forEach(function(row){
-                $scope.chats.push(row);
+                // Dont add entry if already displayed.
+                if ( ! RpgService.doEntryExist($scope.chats, row) )
+                    $scope.chats.push(row);
             });
         }
 
         // If new chronicles.
         if (response.newChronicles.length > 0 ) {
             response.newChronicles.forEach(function(row){
-                $scope.chronicles.push(row);
+                if ( ! RpgService.doEntryExist($scope.chronicles, row) ) {
+                    $scope.chronicles.push(row);
+                }
             });
         }
 
@@ -1599,15 +1828,6 @@ angular.module('ShApp')
             //console.log("Ändring i users online");
             $scope.activeUsers = response.activeUsers;
         }
-
-    });
-
-    $scope.$on('newChronicle', function(event,response){
-        // If new chronicles.
-        if (!! response.newChronicle) {
-            $scope.chronicles.push(response.newChronicle);
-
-        }
     });
 
     // When user leaves chat.
@@ -1615,21 +1835,6 @@ angular.module('ShApp')
         console.log("Lämnar rpg.");
         RpgService.stopPulling();
     });
-
-    $scope.roleDices = function(){
-        console.log("Nu ska det slåss tärningar!");
-
-        var nrOfDices   = $scope.input.dice.nr;
-        var diceType    = $scope.input.dice.type;
-        var diceModType = $scope.input.dice.modtype;
-        var diceMod     = $scope.input.dice.mod;
-        var diceMotivation  = $scope.input.dice.description;
-
-        console.log("Nr " +nrOfDices+ " Type:" + diceType+ " Mod type: " +diceModType+ " Mod: " +diceMod + ", motivering: "+diceMotivation);
-
-        RpgService.roleOrdinaryDices(nrOfDices,diceType,diceModType,diceMod,diceMotivation);
-
-    }
 
 });
 
@@ -1723,11 +1928,14 @@ angular.module('ShApp')
 
 // inject the Comment service into our controller
 .controller('headerMenuCtrl', function($scope, $rootScope, UserService, $location) {
+	$scope.menuUser = { name: "", id: 0, loggedIn: false };
 
-	$scope.currentUser = { name: "", id: 0, loggedIn: false };
-
-	$scope.$on('loginChange', function(){
-		$scope.currentUser = UserService.currentUser;
+	$scope.$on('loginChange', function(event, response){
+		// UserService.currentUser.id
+		$scope.menuUser.id = UserService.currentUser.id;
+		$scope.menuUser.name = UserService.currentUser.name;
+		$scope.menuUser.loggedIn = UserService.currentUser.loggedIn;
+		//$scope.$digest();
 	});
 
 	$scope.logout = function() {
@@ -1834,4 +2042,31 @@ angular.module('ShApp')
     };
 });
 
+angular.module('ShApp')
+
+.directive('rpgInputChatDir', function() {
+    var result = {};
+    result.restrict =  'E';
+    result.templateUrl = "views/directives/rpg_inputs/rpg_input_chat.html";
+
+    return result;
+});
+angular.module('ShApp')
+
+.directive('rpgInputChronicleDir', function() {
+    var result = {};
+    result.restrict =  'E';
+    result.templateUrl = "views/directives/rpg_inputs/rpg_input_chronicle.html";
+
+    return result;
+});
+angular.module('ShApp')
+
+.directive('rpgInputDicesDir', function() {
+    var result = {};
+    result.restrict =  'E';
+    result.templateUrl = "views/directives/rpg_inputs/input_dices.html";
+
+    return result;
+});
 //# sourceMappingURL=sagohamnen.js.map

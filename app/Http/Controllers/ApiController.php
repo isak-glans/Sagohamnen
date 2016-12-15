@@ -13,10 +13,10 @@ class ApiController extends Controller
 {
     protected $statusCode = 200;
 
-
     // Session::put('key', 'value');
     function __construct()
     {
+        Session::put('fiskar', "gott");
         $this->update_last_activity();
     }
 
@@ -24,12 +24,13 @@ class ApiController extends Controller
     {
         $user = Auth::user();
         if ($user) {
-            $last_activity = Carbon::parse( Session::get('last_activity') );
+
+            $last_activity = Session::get('last_activity');
             $now = Carbon::now();
             if ($last_activity !== null ){
                 // See if last activity less then one minute ago.
                 if ( $last_activity->lt( $now->subMinute() ) ) {
-                    $user->updated_at = $now;
+                    $user->activity = $now;
                     $user->save();
                     Session::put('last_activity', $now);
                 }

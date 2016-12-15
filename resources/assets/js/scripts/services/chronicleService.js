@@ -1,25 +1,28 @@
 angular.module('ShApp')
 
-.factory('ChronicleService', function($http, $sce, DbService) {
+.factory('ChronicleService', function($resource, entriesPerPage) {
 
-	var factory = {};
+	var vm = {};
 
-	factory.chroniclesPerPage = function(campaignId,pageNr) {
-		var result;
+    var Chronicle = $resource('/api/chronicle/:campaignId',{},{
+        // campaign/{campaign_id}/page/{page_nr}
+        entriesPerPage : { method : "GET", url : "/api/campaign/:campaignId/page/:chronicleId" },
+    });
 
-		return DbService.chroniclesPerPage(campaignId, pageNr).then(function successCallback(response) {
-            //console.log(response);
-            return response.data;
-        }, function errorCallback(response) {
-            if(response.status == 404) {
-                $location.path("error/404");
-            }
-        });
+    vm.entriesPerPage = function(campaignID, pageNr){
+        Chronicle.entriesPerPage({ 'campaignId' : campaignID, 'chronicleId' : pageNr}).$promise;
+    }
 
-        //return result;
-	}
+    vm.storeEntry = function(campaignId, text, characterId){
+        var chronicle = new Chronicle({id: campaignId});
+        chronicle.text          = text;
+        chronicle.campaign_id   = campaignId;
+        chronicle.character_id  = characterId;
 
+        var result = chronicle.$save();
+        return result;
+    }
 
-	return factory;
+	return vm;
 
 });

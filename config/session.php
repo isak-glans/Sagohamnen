@@ -135,6 +135,7 @@ return [
     |
     */
 
+    // 'domain' => 'localhost:8000',
     'domain' => null,
 
     /*

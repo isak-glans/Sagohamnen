@@ -48,7 +48,9 @@
 
 		<a ng-show="archived == false" class="btn btn-default" ng-href="#/edit_character/{{form.id}}"><span class="glyphicon glyphicon-pencil"></span> Redigera</a>
 
-		<button ng-show="archived && form.can_reactivate" type="button" ng-click="setApplier()" class="btn btn-default"><span class="glyphicon glyphicon-share-alt"></span> Sätt som ansökande</button>
+		<button ng-show="archived && form.can_reactivate && !form.i_am_gm" type="button" ng-click="setApplier()" class="btn btn-default"><span class="glyphicon glyphicon-share-alt"></span> Sätt som ansökande</button>
+
+		<button ng-show="archived && form.can_reactivate && form.i_am_gm" type="button" ng-click="setNpc()" class="btn btn-default"><span class="glyphicon glyphicon-share-alt"></span> Lägg tillbaka in i äventyr</button>
 	</span>
 
 </div>

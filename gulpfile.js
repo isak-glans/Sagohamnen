@@ -47,7 +47,11 @@ elixir(function(mix) {
             'sagohamnen.js',
             'vendors.js',
         ], 'public/assets/js/sagohamnen_build.js', 'public/assets/js/');
+
+
     }
+
+    //mix.phpUnit(['tests/unit/**/*']);
 
 });
 
